@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html><head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Portfolio Site">
+    
+    <link rel="shortcut icon" href="https://mulfordkl.github.io/favicon.ico">
+    
+    <link rel="stylesheet" href="/css/style.min.css">
+    <title>2021 UMN interdisciplinary health data competition</title>
+</head>
+<body><header id="banner">
+    <h2><a href="https://mulfordkl.github.io">kellen  mulford</a></h2>
+    <nav>
+        <ul>
+            <li>
+                <a href="/" title="posts">projects</a>
+            </li><li>
+                <a href="/tags/" title="tags">tags</a>
+            </li><li>
+                <a href="/about/" title="about">about</a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main id="content">
+<article>
+    <header id="post-header">
+        <h1>2021 UMN interdisciplinary health data competition</h1>
+            <div>
+                <time>April 15, 2021</time>
+                </div>
+    </header><h3 id="watch-the-presentation-here-linkhttpsumnzoomusrecplay_t4ikuggae9wa1veojewoxf0g3ejy5yttasnx9efttqirasoxlejjzibamhkg6ntz9vxj7miz1o3ey9bvut-yb2s8fpmwkzxstarttime1617138118000_x_zm_rtaidbm3o1qd3rc-fdsbnw5gcew16288781881632647e31df6e13e5cc1ebf23026f15e25_x_zm_rhtaid145">Watch the presentation here: <a href="https://umn.zoom.us/rec/play/_T4IkuGgAe9Wa1veOJeWOXf0g3EJy5YTtasNx9eftTqiRaSOxLeJJZiBAmhkG6NTz9Vxj7miZ1O3Ey9B.vut-yb2S8FPMWKzx?startTime=1617138118000&amp;_x_zm_rtaid=bM3o1qd3RC-fdsbnw5Gcew.1628878188163.2647e31df6e13e5cc1ebf23026f15e25&amp;_x_zm_rhtaid=145">Link</a></h3>
+<p>This past month I had the opportunity to compete in the 2021 edition of the Interdisciplinary Health Data competition, put on by the University of Minnesota Carlson School of Management. I joined a team of two other CTSI TL1 scholars, Serena Xiong and Emily Groene Faherty, both in the School of Public Health.</p>
+<p>The competition requires use of one of two datasets, and can be supplemented by any other publically available dataset. The required dataset, unsurprisingly, was COVID-19 hospitalization and community impact data from across the country. As this was March, and vaccination efforts were in full swing, our team quickly decided to focus on vaccination data. Specifically, we were wondering if the early reports of vaccination disparities could be seen in the publically available data.</p>
+<h4 id="approach">Approach</h4>
+<p>Our approach was straightforward - could we identify demographic, socioeconomic, or COVID-19 related factors that correlate with the vaccination rate in a specific county?</p>
+<p>To start, we needed to get the vaccination rate in each county. There are two options for this: 1. Use the absolute percentage of adults vaccinated at a fixed time point or 2. Use the rate at which a county is vaccinating its population. We decided to use the latter, as we thought it would give a more dynamic representation of how the vaccination process was going in a county.</p>
+<p>We acquired the weekly vaccination counts per county from the Minnesota Department of Health. All I needed to do then was to fit a linear model to each county, where the input variable was time and the output variable was the percentage of vaccinated adults in the county. Then - the coefficient of the time variable gives the rate at which the county was vaccinating its population. I learned how to plot to a map to make the following figure:</p>
+<p><img src="/static/figs/ihdc-2021/vacc-rates.png" alt="Figure 1: Vaccination Rates by MN County" title="Vaccination Rates"></p>
+<p>At that point in time, Cook county and Mahnomen county had absurdly high rates of vaccination. We did a little digging, and found that Cook county had a extremely robust COVID-19 information site, with lots of helpful info on where to get the vaccine. Mahnomen county is entirely located within a Native American reservation - and is allowed to set its own rules for vaccine elligibility.</p>
+<p>The next step of our analysis was to see if we could build a model predicting the vaccination rate in a county based on demographic, socioeconomic, or COVID-19 related factors. First we assembled a large dataset of potential covariates; ranging from demographic factors like age, race, and ethnicity to socioeconomic factors like broadband access to COVID-19 factors like nursing home beds per capita, or the peak COVID-19 caseload during the pandemic. To do an initial search, we calculated simple correlation between these factors on a county level and the county&rsquo;s vaccination rate, which you can see here:</p>
+<p><img src="/static/figs/ihdc-2021/correlation.png" alt="Figure 2: Vaccination Rate Correlates" title="Covariate correlations with vaccination rate"></p>
+<p>As nursing homes were the first to get the vaccine, we were not surprised by that positive correlation. The surprise here was the &ldquo;social distancing&rdquo; metric. This metric gives the overall level of county wide adherence to social distancing guidelines (I am not sure how this is calculated - maybe some combination of sales or attendance figures in public?). The fact that it is positively correlated means that counties that had a higher adherence to social distancing guidelines had higher vaccination rates. We plotted the top 6 correlated features on maps of Minnesota:</p>
+<p><img src="/static/figs/ihdc-2021/corrmap1.png" alt="Figure 3: Vaccination Rate Correlates, Mapped" title="Covariates Mapped">
+<img src="/static/figs/ihdc-2021/corrmap2.png" alt="Figure 4: Vaccination Rate Correlates, Mapped" title="Coviariates Mapped"></p>
+<p>You&rsquo;ll note that a lot of the factors negatively correlated with vaccination rate are highest in the counties directly surrounding the twin cities. I don&rsquo;t have a great explanation for this - but in my head it involves Facebook and anti-vaccination sentiments among the suburbs.</p>
+<p>Finally, We built a gradient boosting regressor which outperformed a baseline &ldquo;mean-value&rdquo; regression line. One of the issues with machine learning models in general is interpretability. GBMs can get around this by what&rsquo;s called a partial dependence plot. A partial dependence plot looks at how the output of the model changes across the range of a covariate, keeping all other covariates constant. It is not a perfect method, but it can tell you how a model behaves under certain variable changes. The plots of these back up a lot of the knowledge gained from the correlation plots:</p>
+<p><img src="/static/figs/ihdc-2021/partialdependence.png" alt="Figure 5: Partial Dependence Plots" title="Partial Dependence Plots"></p>
+<p>Our conclusions were that vaccination rates tended to be lowest in the suburbs, but the state was actually doing a pretty good job of vaccinating the hard hit rural areas.</p>
+<h3 id="final-thoughts">Final thoughts</h3>
+<p>While we were named as one of the five finalist teams out of 26, which is why we got to present live to a panel of judges; we unfortunately placed just outside of the money. There are a few things I would&rsquo;ve done differently:</p>
+<ul>
+<li>Perform the same analysis on a zipcode wide level, where disparities might be more apparent. This was not possible for data in MN but could be done in Chicago, where zipcode vaccination data is available.</li>
+<li>Produce descriptive statistics of vaccination rate against some of the disparity measures we had - skipping straight to correlations and predictive models leaves out a big chunk of the story.</li>
+</ul>
+<p>Nonetheless, I had a great time working on this. It was my first exposure to public health style datasets, and I really enjoyed working with real world data with two of my talented peers. I linked our presentation at the top of the post if you would like to watch it. All the analysis was done in R, and I can share those scripts upon request.</p>
+</article>
+
+        </main><footer id="footer">
+    copyright © 2022 kellen mulford
+</footer>
+</body>
+</html>

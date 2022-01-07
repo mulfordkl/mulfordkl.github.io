@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html><head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Portfolio Site">
+    
+    <link rel="shortcut icon" href="https://mulfordkl.github.io/favicon.ico">
+    
+    <link rel="stylesheet" href="/css/style.min.css">
+    <title>predicting recurrence in patients with brain metastases</title>
+</head>
+<body><header id="banner">
+    <h2><a href="https://mulfordkl.github.io">kellen  mulford</a></h2>
+    <nav>
+        <ul>
+            <li>
+                <a href="/" title="posts">projects</a>
+            </li><li>
+                <a href="/tags/" title="tags">tags</a>
+            </li><li>
+                <a href="/about/" title="about">about</a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main id="content">
+<article>
+    <header id="post-header">
+        <h1>predicting recurrence in patients with brain metastases</h1>
+            <div>
+                <time>May 10, 2021</time>
+                </div>
+    </header><h3 id="read-the-paper-here-linkhttpswwwctrosciencearticles2405-63082100045-8fulltext">Read the paper here: <a href="https://www.ctro.science/article/S2405-6308(21)00045-8/fulltext">LINK</a></h3>
+<p>This past week I had my first first-author publication published. It&rsquo;s satisfying to see a project I put a lot of thought and effort into come to something tangible. This paper is the combination of a cool technique applied to a unique dataset.</p>
+<p>The technique is radiomics, a method for extracting quantitative features from medical imaging datasets and developing predictive models with those features. The dataset is a cohort of patients who develop brain metastases, have them resected, and then receive stereotactic radiosurgery to the surgical cavity. Our question is whether or not radiomics features could be used to predict which patients will experience a recurrence within the resection cavity. This is what the MRIs look like:</p>
+<p><img src="/static/figs/ctro-cavity/mri.png" alt="Figure 1: MRI" title="MRI images"></p>
+<p>If you don&rsquo;t want to read the rest of the article - our conclusion was that a radiomics based predictive model does moderately succesfull at identifying patients who will eventually experience a local recurrence and substantiallyt outperforms clinically derived features alone. Our hunch is that more data would increase this effect.</p>
+<h3 id="the-process">The Process</h3>
+<p>The first step is the assembly of the dataset - we were looking for patients who had</p>
+<ol>
+<li>Developed a brain metastasis secondary to a cancer somewhere else in the body</li>
+<li>A surgical resection (removal) of that brain metastasis</li>
+<li>Adjuvant stereotactic radiosurgery to the resection cavity</li>
+</ol>
+<p>This identified 73 cavities from 69 patients. Not a lot for machine learning, but it is what it is.</p>
+<p>Next the MRIs were processed to have a uniform signal level by way of batched histogram matching. The resection cavities were contoured for feature extraction and ~100 shape, intensity, and texture features were extracted from each cavity region of interest (for more info on radiomics feature extraction you can look through this site: <a href="https://pyradiomics.readthedocs.io/en/latest/">Link</a>).</p>
+<p>Now the fun part - model building! With ~100 features and 73 instances, some feature selection will be necessary. I cannot tell you how many papers in top-ranked journals I&rsquo;ve seen make the mistake of performing feature selection before model training, which leaks validation data information into the model training phase!</p>
+<p>Within our cross-validation scheme (K-fold with K=5) I performed recursive-feature-elimination on a logistic regression screener. The number of features was limited to prevent overfitting - we ended up with 6 features. Then those features were used to train a gradient-boosting classifier. Average performance over the K validation folds was reported.</p>
+<p>The last step was to take the probability output of the GBM classifier and identify a cutpoint between &ldquo;low&rdquo; and &ldquo;high&rdquo; risk groups that maximized the sum of sensitivity and specificity between them, and then to compare the &ldquo;local recurrence&rdquo; survival curves between the two groups.</p>
+<h3 id="results">Results</h3>
+<p>You can read the article for all the details - so I will keep this brief.</p>
+<ul>
+<li>Our image-feature based model gives us an AUC of 0.73, with an accuracy of 76%. This outperforms the model trained on the clinical features alone (see figure).</li>
+</ul>
+<p><img src="/static/figs/ctro-cavity/auc.png" alt="Figure 1: ROC curves" title="ROC Curves"></p>
+<ul>
+<li>The cutpoint analysis on the GBM class propbabilities shows that patients placed into the &ldquo;high risk&rdquo; category by the model have worse outcomes. While this does not rise to the 0.05 level of statistical significance - the trend is clearly evident.</li>
+</ul>
+<p><img src="/static/figs/ctro-cavity/survival.png" alt="Figure 2: Survival curves" title="Survival Curves"></p>
+<h3 id="conclusions">Conclusions</h3>
+<p>The big conclusion is that radiomics models not only apply to solid tumors, but also to the resection cavities left behind - this could potentially lead the way towards personalized adjuvant treatment planning schemes. Unfortunately, the opportunities to get more data for this project are small - as the department upgraded its GammaKnife and they now do a hypofractionated scheme for adjuvant therapy to cavities.</p>
+<p>Overall this was one of the first projects I took on as a graduate student, and it was really cool to see it out in the world. Thanks for reading!</p>
+</article>
+
+        </main><footer id="footer">
+    copyright © 2022 kellen mulford
+</footer>
+</body>
+</html>

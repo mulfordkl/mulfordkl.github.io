@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html><head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Portfolio Site">
+    
+    <link rel="shortcut icon" href="https://mulfordkl.github.io/favicon.ico">
+    
+    <link rel="stylesheet" href="/css/style.min.css">
+    <title>modeling encounter rate with eBird data</title>
+</head>
+<body><header id="banner">
+    <h2><a href="https://mulfordkl.github.io">kellen  mulford</a></h2>
+    <nav>
+        <ul>
+            <li>
+                <a href="/" title="posts">projects</a>
+            </li><li>
+                <a href="/tags/" title="tags">tags</a>
+            </li><li>
+                <a href="/about/" title="about">about</a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main id="content">
+<article>
+    <header id="post-header">
+        <h1>modeling encounter rate with eBird data</h1>
+            <div>
+                <time>January 7, 2022</time>
+                </div>
+    </header><p>In the last post about eBird data I went through how I acquired,
+cleaned, and explored the dataset. In this project, I am exploring how
+the eBird data can be used to model the encounter rate of the White
+Breasted Nuthatch in Minnesota. As with the last post, I have been
+heavily referencing the eBird best practices eBook.</p>
+<p>There are a lot of libraries so you can find them in the session info at
+the bottom.</p>
+<h3 id="setup">Setup</h3>
+<p>First we will set the paths to our datasets</p>
+<div class="highlight"><pre class="chroma"><code class="language-r" data-lang="r"><span class="c1"># Random Seed</span>
+<span class="nf">set.seed</span><span class="p">(</span><span class="m">5</span><span class="p">)</span>
+
+<span class="c1"># Data Files and Output Directory</span>
+<span class="n">output_dir</span> <span class="o">&lt;-</span> <span class="nf">here</span><span class="p">(</span><span class="s">&#34;output&#34;</span><span class="p">)</span>
+<span class="n">ebird_file</span> <span class="o">&lt;-</span> <span class="nf">here</span><span class="p">(</span><span class="s">&#34;data&#34;</span><span class="p">,</span> <span class="s">&#34;ebd_whbrnuthatch_yearround_mn_zf.csv&#34;</span><span class="p">)</span>
+<span class="n">habitat_file</span> <span class="o">&lt;-</span> <span class="nf">here</span><span class="p">(</span><span class="s">&#34;data&#34;</span><span class="p">,</span> <span class="s">&#34;pland-elev_location-year.csv&#34;</span><span class="p">)</span>
+<span class="n">pred_surf_file</span> <span class="o">&lt;-</span> <span class="nf">here</span><span class="p">(</span><span class="s">&#34;data&#34;</span><span class="p">,</span> <span class="s">&#34;pland-elev_prediction-surface.csv&#34;</span><span class="p">)</span>
+<span class="n">surface_tif_file</span> <span class="o">&lt;-</span> <span class="nf">here</span><span class="p">(</span><span class="s">&#34;data&#34;</span><span class="p">,</span> <span class="s">&#34;prediction-surface.tif&#34;</span><span class="p">)</span>
+<span class="n">geopackage_file</span> <span class="o">&lt;-</span> <span class="nf">here</span><span class="p">(</span><span class="s">&#34;data&#34;</span><span class="p">,</span> <span class="s">&#34;gis-data.gpkg&#34;</span><span class="p">)</span>
+</code></pre></div><p>And now we can load our files.</p>
+<div class="highlight"><pre class="chroma"><code class="language-r" data-lang="r"><span class="c1"># Load eBird data</span>
+<span class="n">ebird</span> <span class="o">&lt;-</span> <span class="nf">read_csv</span><span class="p">(</span><span class="n">ebird_file</span><span class="p">)</span> <span class="o">%&gt;%</span> 
+  <span class="nf">mutate</span><span class="p">(</span><span class="n">year</span> <span class="o">=</span> <span class="nf">year</span><span class="p">(</span><span class="n">observation_date</span><span class="p">))</span> <span class="c1"># Get Year for joining with habitat data</span>
+
+<span class="c1"># MODIS habitat covariates</span>
+<span class="n">habitat</span> <span class="o">&lt;-</span> <span class="nf">read_csv</span><span class="p">(</span><span class="n">habitat_file</span><span class="p">)</span> <span class="o">%&gt;%</span> 
+  <span class="nf">mutate</span><span class="p">(</span><span class="n">year</span> <span class="o">=</span> <span class="nf">as.integer</span><span class="p">(</span><span class="n">year</span><span class="p">))</span>
+
+<span class="c1"># combine ebird and habitat data</span>
+<span class="n">ebird_habitat</span> <span class="o">&lt;-</span> <span class="nf">inner_join</span><span class="p">(</span><span class="n">ebird</span><span class="p">,</span> <span class="n">habitat</span><span class="p">,</span> <span class="n">by</span> <span class="o">=</span> <span class="nf">c</span><span class="p">(</span><span class="s">&#34;locality_id&#34;</span><span class="p">,</span> <span class="s">&#34;year&#34;</span><span class="p">))</span>
+
+<span class="c1"># Load the prediction surface</span>
+<span class="n">pred_surface</span> <span class="o">&lt;-</span> <span class="nf">read_csv</span><span class="p">(</span><span class="n">pred_surf_file</span><span class="p">)</span>
+
+<span class="n">max_lc_year</span> <span class="o">&lt;-</span> <span class="nf">max</span><span class="p">(</span><span class="n">pred_surface</span><span class="o">$</span><span class="n">year</span><span class="p">)</span>
+<span class="n">prediction_surface_raster</span> <span class="o">&lt;-</span> <span class="nf">raster</span><span class="p">(</span><span class="n">surface_tif_file</span><span class="p">)</span>
+
+<span class="c1"># Load GIS data from geopackage</span>
+<span class="n">map_proj</span> <span class="o">&lt;-</span> <span class="nf">st_crs</span><span class="p">(</span><span class="s">&#34;ESRI:102003&#34;</span><span class="p">)</span>
+<span class="n">ne_land</span> <span class="o">&lt;-</span> <span class="nf">read_sf</span><span class="p">(</span><span class="n">geopackage_file</span><span class="p">,</span> <span class="s">&#34;ne_land&#34;</span><span class="p">)</span> <span class="o">%&gt;%</span> 
+  <span class="nf">st_transform</span><span class="p">(</span><span class="n">crs</span> <span class="o">=</span> <span class="n">map_proj</span><span class="p">)</span> <span class="o">%&gt;%</span> 
+  <span class="nf">st_geometry</span><span class="p">()</span>
+<span class="n">mn</span> <span class="o">&lt;-</span> <span class="nf">read_sf</span><span class="p">(</span><span class="n">geopackage_file</span><span class="p">,</span> <span class="s">&#34;mn&#34;</span><span class="p">)</span> <span class="o">%&gt;%</span>
+  <span class="nf">st_transform</span><span class="p">(</span><span class="n">crs</span> <span class="o">=</span> <span class="n">map_proj</span><span class="p">)</span> <span class="o">%&gt;%</span>
+  <span class="nf">st_geometry</span><span class="p">()</span>
+<span class="n">ne_country_lines</span> <span class="o">&lt;-</span> <span class="nf">read_sf</span><span class="p">(</span><span class="n">geopackage_file</span><span class="p">,</span> <span class="s">&#34;ne_country_lines&#34;</span><span class="p">)</span> <span class="o">%&gt;%</span> 
+  <span class="nf">st_transform</span><span class="p">(</span><span class="n">crs</span> <span class="o">=</span> <span class="n">map_proj</span><span class="p">)</span> <span class="o">%&gt;%</span> 
+  <span class="nf">st_geometry</span><span class="p">()</span>
+<span class="n">ne_state_lines</span> <span class="o">&lt;-</span> <span class="nf">read_sf</span><span class="p">(</span><span class="n">geopackage_file</span><span class="p">,</span> <span class="s">&#34;ne_state_lines&#34;</span><span class="p">)</span> <span class="o">%&gt;%</span> 
+  <span class="nf">st_transform</span><span class="p">(</span><span class="n">crs</span> <span class="o">=</span> <span class="n">map_proj</span><span class="p">)</span> <span class="o">%&gt;%</span> 
+  <span class="nf">st_geometry</span><span class="p">()</span>
+<span class="n">mn_bound</span> <span class="o">&lt;-</span> <span class="nf">read_sf</span><span class="p">(</span><span class="nf">here</span><span class="p">(</span><span class="s">&#34;data&#34;</span><span class="p">,</span> <span class="s">&#34;bdry_state_of_minnesota.gpkg&#34;</span><span class="p">))</span> <span class="o">%&gt;%</span> 
+  <span class="nf">st_transform</span><span class="p">(</span><span class="n">crs</span> <span class="o">=</span> <span class="n">map_proj</span><span class="p">)</span> <span class="o">%&gt;%</span> 
+  <span class="nf">st_geometry</span><span class="p">()</span>
+</code></pre></div><h3 id="data-subsampling-and-spatial-bias">Data Subsampling and Spatial Bias</h3>
+<p>Here we will implement grid based undersampling, which is primarily a
+method for countering spatial bias in data. Unlike non-spatial data
+sets, spatial data does not usually obey the statistical idea of
+sampling from an independent and identically distributed random
+variable. You can think about it this way - Starbucks are not evenly
+distributed throughout a state, they appear in population centers. As a
+result, the parameters of the sample (the location) affect the
+probability that we will observe something. This becomes a major problem
+in eBird data, where most checklists are completed near where the person
+completing the checklist lives, so the actual checklists are clustered
+around population centers. If you look at the map at the end of my last
+eBird post, this trend is clear. One way to counter this is to subsample
+checklists in a grid. This can also be used to fix some class imbalance
+issues by subsampling according to whether or not the checklist observed
+the species in question. In the eBird Best Practices book, they look at
+the Wood Thrush, a rarer species than the White-Breasted Nuthatch. They
+also look at a much larger area than Minnesota - so we will adjust some
+of the parameters to match our scenario.</p>
+<p>I also trained the model on the whole data set and model performance on
+the test set was consistently stronger on the whole data set versus the
+sub-sampled data set. This was somewhat surprising to me, as both eBird
+best practices and the linked paper (ADD HERE) suggested that the
+reduction of spatial bias would increase model accuracy when predicting
+encounter rate from land cover covariates. Perhaps this effect is small
+for a species without a big class imbalance, and so the reduction in
+model performance from the decrease in overall data has a larger effect
+than the spatial bias?</p>
+<div class="highlight"><pre class="chroma"><code class="language-r" data-lang="r"><span class="n">dggs</span> <span class="o">&lt;-</span> <span class="nf">dgconstruct</span><span class="p">(</span><span class="n">spacing</span> <span class="o">=</span> <span class="m">1</span><span class="p">)</span>
+
+<span class="c1">## Resolution: 16, Area (km^2): 1.18491167242236, Spacing (km): 1.07508800966481, CLS (km): 1.22828188927244</span>
+
+<span class="n">checklist_cell</span> <span class="o">&lt;-</span> <span class="n">ebird_habitat</span> <span class="o">%&gt;%</span> 
+  <span class="nf">mutate</span><span class="p">(</span><span class="n">cell</span> <span class="o">=</span> <span class="nf">dgGEO_to_SEQNUM</span><span class="p">(</span><span class="n">dggs</span><span class="p">,</span> <span class="n">longitude</span><span class="p">,</span> <span class="n">latitude</span><span class="p">)</span><span class="o">$</span><span class="n">seqnum</span><span class="p">,</span>
+          <span class="n">year</span> <span class="o">=</span> <span class="nf">year</span><span class="p">(</span><span class="n">observation_date</span><span class="p">),</span>
+          <span class="n">week</span> <span class="o">=</span> <span class="nf">week</span><span class="p">(</span><span class="n">observation_date</span><span class="p">))</span>
+<span class="n">ebird_ss</span> <span class="o">&lt;-</span> <span class="n">checklist_cell</span> <span class="o">%&gt;%</span> 
+  <span class="nf">group_by</span><span class="p">(</span><span class="n">species_observed</span><span class="p">,</span> <span class="n">year</span><span class="p">,</span> <span class="n">week</span><span class="p">,</span> <span class="n">cell</span><span class="p">)</span> <span class="o">%&gt;%</span> 
+  <span class="nf">sample_n</span><span class="p">(</span><span class="n">size</span> <span class="o">=</span> <span class="m">1</span><span class="p">)</span> <span class="o">%&gt;%</span> 
+  <span class="nf">ungroup</span><span class="p">()</span>
+
+<span class="c1"># original data</span>
+<span class="n">orig_count</span> <span class="o">&lt;-</span> <span class="nf">count</span><span class="p">(</span><span class="n">ebird_habitat</span><span class="p">,</span> <span class="n">species_observed</span><span class="p">)</span> <span class="o">%&gt;%</span> 
+  <span class="nf">mutate</span><span class="p">(</span><span class="n">percent</span> <span class="o">=</span> <span class="n">n</span> <span class="o">/</span> <span class="nf">sum</span><span class="p">(</span><span class="n">n</span><span class="p">))</span>
+
+<span class="n">knitr</span><span class="o">::</span><span class="nf">kable</span><span class="p">(</span><span class="n">orig_count</span><span class="p">,</span> <span class="n">caption</span> <span class="o">=</span> <span class="s">&#34;All data&#34;</span><span class="p">)</span>
+</code></pre></div><table>
+<caption>All data</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;">species_observed</th>
+<th style="text-align: right;">n</th>
+<th style="text-align: right;">percent</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">FALSE</td>
+<td style="text-align: right;">406573</td>
+<td style="text-align: right;">0.7145584</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">TRUE</td>
+<td style="text-align: right;">162412</td>
+<td style="text-align: right;">0.2854416</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight"><pre class="chroma"><code class="language-r" data-lang="r"><span class="c1"># subsampled data</span>
+<span class="n">ss_count</span> <span class="o">&lt;-</span> <span class="nf">count</span><span class="p">(</span><span class="n">ebird_ss</span><span class="p">,</span> <span class="n">species_observed</span><span class="p">)</span> <span class="o">%&gt;%</span> 
+  <span class="nf">mutate</span><span class="p">(</span><span class="n">percent</span> <span class="o">=</span> <span class="n">n</span> <span class="o">/</span> <span class="nf">sum</span><span class="p">(</span><span class="n">n</span><span class="p">))</span>
+
+<span class="n">knitr</span><span class="o">::</span><span class="nf">kable</span><span class="p">(</span><span class="n">ss_count</span><span class="p">,</span> <span class="n">caption</span> <span class="o">=</span> <span class="s">&#34;Sub-sampled data&#34;</span><span class="p">)</span>
+</code></pre></div><table>
+<caption>Sub-sampled data</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;">species_observed</th>
+<th style="text-align: right;">n</th>
+<th style="text-align: right;">percent</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">FALSE</td>
+<td style="text-align: right;">210524</td>
+<td style="text-align: right;">0.70752</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">TRUE</td>
+<td style="text-align: right;">87028</td>
+<td style="text-align: right;">0.29248</td>
+</tr>
+</tbody>
+</table>
+<p>This process would reduce our data by a factor of about 2, while
+slightly increasing the proportion of checklists with a sighting.</p>
+<p>Note - for the reasons explained above, the rest of the post performs
+the analysis without sub-sampling.</p>
+<h3 id="train-and-calibrate-the-model">Train and calibrate the model</h3>
+<p>Next, since we will be building a random forest model to estimate
+encounter rate, I split the data into train and testing sets. For this
+analysis we will focus on the month of May, which had altogether the
+most sightings of Nuthatches (and the most checklists), but not the
+highest proportion of checklists with a sighting among months. Note that
+here I am selecting a subset of the variables, specifically the
+landcover and elevation covariates as well as the year and day.</p>
+<div class="highlight"><pre class="chroma"><code class="language-r" data-lang="r"><span class="n">ebird_split</span> <span class="o">&lt;-</span> <span class="n">ebird_habitat</span> <span class="o">%&gt;%</span>
+    <span class="nf">mutate</span><span class="p">(</span><span class="n">month</span> <span class="o">=</span> <span class="nf">month</span><span class="p">(</span><span class="n">observation_date</span><span class="p">,</span> <span class="n">label</span> <span class="o">=</span> <span class="kc">FALSE</span><span class="p">),</span>
+          <span class="n">species_observed</span> <span class="o">=</span> <span class="n">species_observed</span><span class="p">)</span> <span class="o">%&gt;%</span>
+    <span class="nf">filter</span><span class="p">(</span><span class="n">month</span> <span class="o">==</span> <span class="m">5</span><span class="p">)</span> <span class="o">%&gt;%</span>
+    <span class="nf">select</span><span class="p">(</span><span class="n">species_observed</span><span class="p">,</span> 
+            <span class="n">year</span><span class="p">,</span> 
+            <span class="n">day_of_year</span><span class="p">,</span>
+            <span class="nf">starts_with</span><span class="p">(</span><span class="s">&#34;pland_&#34;</span><span class="p">),</span>
+            <span class="nf">starts_with</span><span class="p">(</span><span class="s">&#34;elevation_&#34;</span><span class="p">))</span> <span class="o">%&gt;%</span> 
+    <span class="nf">drop_na</span><span class="p">()</span>
+  
+<span class="n">ebird_split</span> <span class="o">&lt;-</span> <span class="n">rsample</span><span class="o">::</span><span class="nf">initial_split</span><span class="p">(</span>
+  <span class="n">ebird_split</span><span class="p">,</span>
+  <span class="n">prop</span> <span class="o">=</span> <span class="m">0.8</span> 
+<span class="p">)</span>
+
+<span class="n">ebird_train</span> <span class="o">&lt;-</span> <span class="nf">training</span><span class="p">(</span><span class="n">ebird_split</span><span class="p">)</span> 
+<span class="n">ebird_test</span> <span class="o">&lt;-</span> <span class="nf">testing</span><span class="p">(</span><span class="n">ebird_split</span><span class="p">)</span>
+
+<span class="n">ebird_train_label</span> <span class="o">&lt;-</span> <span class="nf">pull</span><span class="p">(</span><span class="n">ebird_train</span><span class="p">,</span> <span class="n">species_observed</span><span class="p">)</span>
+<span class="n">ebird_train</span> <span class="o">&lt;-</span> <span class="n">ebird_train</span> <span class="o">%&gt;%</span>
+  <span class="nf">select</span><span class="p">(</span><span class="o">-</span><span class="n">species_observed</span><span class="p">)</span>
+<span class="n">ebird_test_label</span> <span class="o">&lt;-</span> <span class="nf">pull</span><span class="p">(</span><span class="n">ebird_test</span><span class="p">,</span> <span class="n">species_observed</span><span class="p">)</span>
+<span class="n">ebird_test</span> <span class="o">&lt;-</span> <span class="n">ebird_test</span> <span class="o">%&gt;%</span>
+  <span class="nf">select</span><span class="p">(</span><span class="o">-</span><span class="n">species_observed</span><span class="p">)</span>
+</code></pre></div><p>Finally we will train our random forest - using some sensible defaults.</p>
+<div class="highlight"><pre class="chroma"><code class="language-r" data-lang="r"><span class="n">ebird_train_rf</span> <span class="o">&lt;-</span> <span class="nf">bind_cols</span><span class="p">(</span><span class="n">ebird_train_label</span><span class="p">,</span> <span class="n">ebird_train</span><span class="p">)</span> <span class="o">%&gt;%</span>
+    <span class="nf">rename</span><span class="p">(</span><span class="n">species_observed</span> <span class="o">=</span> <span class="s">&#34;...1&#34;</span><span class="p">)</span>
+
+<span class="n">rf</span> <span class="o">&lt;-</span> <span class="nf">ranger</span><span class="p">(</span><span class="n">formula</span> <span class="o">=</span>  <span class="nf">as.factor</span><span class="p">(</span><span class="n">species_observed</span><span class="p">)</span> <span class="o">~</span> <span class="n">.,</span> 
+              <span class="n">data</span> <span class="o">=</span> <span class="n">ebird_train_rf</span><span class="p">,</span>
+              <span class="n">importance</span> <span class="o">=</span> <span class="s">&#34;impurity&#34;</span><span class="p">,</span>
+              <span class="n">probability</span> <span class="o">=</span> <span class="kc">TRUE</span><span class="p">,</span>
+              <span class="n">replace</span> <span class="o">=</span> <span class="kc">TRUE</span><span class="p">,</span> 
+              <span class="n">sample.fraction</span> <span class="o">=</span> <span class="nf">c</span><span class="p">(</span><span class="m">.3</span><span class="p">,</span> <span class="m">0.3</span><span class="p">))</span>
+</code></pre></div><p>We can check the calibration of the model by plotting the predicted
+encounter rate against the observed encounter rate. Additionally we can
+smooth the output of our model by fitting a generative additive model (a
+version of non-linear spline regression) from the predictions of the
+random forest to the observed encounter labels.</p>
+<div class="highlight"><pre class="chroma"><code class="language-r" data-lang="r"><span class="n">rf_calib_data</span> <span class="o">&lt;-</span> <span class="nf">tibble</span><span class="p">(</span>
+    <span class="n">observed</span> <span class="o">=</span> <span class="n">ebird_train_label</span><span class="p">,</span>
+    <span class="n">rf_pred</span> <span class="o">=</span> <span class="n">rf</span><span class="o">$</span><span class="n">predictions[</span><span class="p">,</span><span class="m">2</span><span class="n">]</span>
+<span class="p">)</span>
+
+<span class="n">rf_calibration</span> <span class="o">&lt;-</span> <span class="nf">scam</span><span class="p">(</span><span class="n">observed</span> <span class="o">~</span> <span class="nf">s</span><span class="p">(</span><span class="n">rf_pred</span><span class="p">,</span> <span class="n">k</span> <span class="o">=</span> <span class="m">7</span><span class="p">,</span> <span class="n">bs</span> <span class="o">=</span> <span class="s">&#34;mpi&#34;</span><span class="p">),</span> 
+                        <span class="n">gamma</span> <span class="o">=</span> <span class="m">1.4</span><span class="p">,</span>
+                        <span class="n">data</span> <span class="o">=</span> <span class="n">rf_calib_data</span><span class="p">)</span>
+
+<span class="n">average_encounter</span> <span class="o">&lt;-</span> <span class="n">rf_calib_data</span> <span class="o">%&gt;%</span>
+  <span class="nf">mutate</span><span class="p">(</span><span class="n">pred_cat</span> <span class="o">=</span> <span class="nf">cut</span><span class="p">(</span><span class="n">rf_calib_data</span><span class="o">$</span><span class="n">rf_pred</span><span class="p">,</span> <span class="n">breaks</span> <span class="o">=</span> <span class="nf">seq</span><span class="p">(</span><span class="m">0</span><span class="p">,</span> <span class="m">1</span><span class="p">,</span> <span class="n">by</span><span class="o">=</span><span class="m">0.02</span><span class="p">)))</span> <span class="o">%&gt;%</span>
+  <span class="nf">group_by</span><span class="p">(</span><span class="n">pred_cat</span><span class="p">)</span> <span class="o">%&gt;%</span>
+  <span class="nf">summarise</span><span class="p">(</span><span class="n">pred</span> <span class="o">=</span> <span class="nf">mean</span><span class="p">(</span><span class="n">rf_pred</span><span class="p">),</span> <span class="n">train_label</span> <span class="o">=</span> <span class="nf">mean</span><span class="p">(</span><span class="n">observed</span><span class="p">),</span> <span class="n">checklist_count</span> <span class="o">=</span> <span class="nf">n</span><span class="p">())</span> <span class="o">%&gt;%</span>
+  <span class="nf">ungroup</span><span class="p">()</span>
+
+<span class="n">rf_cal_pred</span> <span class="o">&lt;-</span> <span class="nf">tibble</span><span class="p">(</span><span class="n">rf_pred</span> <span class="o">=</span> <span class="nf">seq</span><span class="p">(</span><span class="m">0</span><span class="p">,</span> <span class="m">1</span><span class="p">,</span> <span class="n">length.out</span> <span class="o">=</span> <span class="m">100</span><span class="p">))</span> <span class="o">%&gt;%</span>
+    <span class="nf">mutate</span><span class="p">(</span><span class="n">calibrated</span> <span class="o">=</span> <span class="nf">predict</span><span class="p">(</span><span class="n">rf_calibration</span><span class="p">,</span> <span class="n">.,</span> <span class="n">type</span> <span class="o">=</span> <span class="s">&#34;response&#34;</span><span class="p">))</span>
+
+<span class="nf">ggplot</span><span class="p">(</span><span class="n">rf_cal_pred</span><span class="p">)</span> <span class="o">+</span>
+  <span class="nf">aes</span><span class="p">(</span><span class="n">x</span> <span class="o">=</span> <span class="n">rf_pred</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">calibrated</span><span class="p">)</span> <span class="o">+</span>
+  <span class="nf">geom_line</span><span class="p">()</span> <span class="o">+</span>
+  <span class="nf">geom_point</span><span class="p">(</span><span class="n">data</span> <span class="o">=</span> <span class="n">average_encounter</span><span class="p">,</span> 
+              <span class="nf">aes</span><span class="p">(</span><span class="n">x</span> <span class="o">=</span> <span class="n">pred</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">train_label</span><span class="p">,</span> <span class="n">size</span> <span class="o">=</span> <span class="nf">sqrt</span><span class="p">(</span><span class="n">checklist_count</span><span class="p">)),</span>
+              <span class="n">show.legend</span> <span class="o">=</span> <span class="kc">FALSE</span><span class="p">,</span> <span class="n">shape</span> <span class="o">=</span> <span class="m">1</span><span class="p">)</span> <span class="o">+</span>
+  <span class="nf">labs</span><span class="p">(</span><span class="n">x</span> <span class="o">=</span> <span class="s">&#34;Estimated Encounter Rate&#34;</span><span class="p">,</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="s">&#34;Observed Encounter Rate&#34;</span><span class="p">,</span>
+        <span class="n">title</span> <span class="o">=</span> <span class="s">&#34;Calibration Curve&#34;</span><span class="p">)</span> <span class="o">+</span>
+    <span class="nf">theme_bw</span><span class="p">()</span>
+</code></pre></div><p><img src="/static/figs/ebird-encounter/calibration-model.png" alt="Figure 1: Calibration Plot" title="Calibration plot"></p>
+<p>What I can see here is that our model consistently overestimates the
+encounter rate. At an estimated encounter rate of 0.5 the observed rate
+is only half that. The model does a better job near the upper limit of
+predicted encounter rate. This means that We can now calculate some
+model performance metrics on the held-out test set.</p>
+<div class="highlight"><pre class="chroma"><code class="language-r" data-lang="r"><span class="n">rf_fitted</span> <span class="o">&lt;-</span> <span class="nf">tibble</span><span class="p">(</span><span class="n">rf_pred</span> <span class="o">=</span> <span class="nf">predict</span><span class="p">(</span><span class="n">rf</span><span class="p">,</span> <span class="n">data</span> <span class="o">=</span> <span class="n">ebird_test</span><span class="p">)</span><span class="o">$</span><span class="n">predictions[</span><span class="p">,</span><span class="m">2</span><span class="n">]</span><span class="p">,</span>
+                    <span class="n">obs</span> <span class="o">=</span> <span class="nf">as.integer</span><span class="p">(</span><span class="n">ebird_test_label</span><span class="p">))</span> <span class="o">%&gt;%</span>
+    <span class="nf">mutate</span><span class="p">(</span><span class="n">model_pred_cal</span> <span class="o">=</span> <span class="nf">predict</span><span class="p">(</span><span class="n">rf_calibration</span><span class="p">,</span> <span class="n">.,</span> <span class="n">type</span> <span class="o">=</span> <span class="s">&#34;response&#34;</span><span class="p">))</span> <span class="o">%&gt;%</span>
+    <span class="nf">mutate</span><span class="p">(</span><span class="n">rf_pred</span> <span class="o">=</span> <span class="nf">pmin</span><span class="p">(</span><span class="nf">pmax</span><span class="p">(</span><span class="n">rf_pred</span><span class="p">,</span> <span class="m">0</span><span class="p">),</span> <span class="m">1</span><span class="p">),</span>
+            <span class="n">model_pred_cal</span> <span class="o">=</span> <span class="nf">pmin</span><span class="p">(</span><span class="nf">pmax</span><span class="p">(</span><span class="n">model_pred_cal</span><span class="p">,</span> <span class="m">0</span><span class="p">),</span> <span class="m">1</span><span class="p">))</span> <span class="o">%&gt;%</span>
+    <span class="nf">mutate</span><span class="p">(</span><span class="n">id</span> <span class="o">=</span> <span class="nf">seq_along</span><span class="p">(</span><span class="n">rf_pred</span><span class="p">),</span>
+            <span class="n">obs</span> <span class="o">=</span> <span class="nf">as.integer</span><span class="p">(</span><span class="nf">as.logical</span><span class="p">(</span><span class="n">obs</span><span class="p">)))</span> <span class="o">%&gt;%</span>
+    <span class="nf">drop_na</span><span class="p">()</span> <span class="o">%&gt;%</span>
+    <span class="nf">rename</span><span class="p">(</span>
+        <span class="n">fit</span> <span class="o">=</span> <span class="n">rf_pred</span><span class="p">,</span>
+        <span class="n">cal</span> <span class="o">=</span> <span class="n">model_pred_cal</span>
+    <span class="p">)</span> <span class="o">%&gt;%</span>
+    <span class="nf">relocate</span><span class="p">(</span><span class="n">obs</span><span class="p">)</span> <span class="o">%&gt;%</span>
+    <span class="nf">relocate</span><span class="p">(</span><span class="n">id</span><span class="p">)</span>
+
+<span class="n">mse_fit</span> <span class="o">&lt;-</span> <span class="nf">mean</span><span class="p">((</span><span class="n">rf_fitted</span><span class="o">$</span><span class="n">obs</span> <span class="o">-</span> <span class="n">rf_fitted</span><span class="o">$</span><span class="n">fit</span><span class="p">)</span><span class="n">^2</span><span class="p">,</span> <span class="n">na.rm</span> <span class="o">=</span> <span class="kc">TRUE</span><span class="p">)</span>
+<span class="n">mse_cal</span> <span class="o">&lt;-</span> <span class="nf">mean</span><span class="p">((</span><span class="n">rf_fitted</span><span class="o">$</span><span class="n">obs</span> <span class="o">-</span> <span class="n">rf_fitted</span><span class="o">$</span><span class="n">cal</span><span class="p">)</span><span class="n">^2</span><span class="p">,</span> <span class="n">na.rm</span> <span class="o">=</span> <span class="kc">TRUE</span><span class="p">)</span>
+
+<span class="n">opt_thresh</span> <span class="o">&lt;-</span> <span class="nf">optimal.thresholds</span><span class="p">(</span><span class="n">rf_fitted</span><span class="p">,</span> <span class="n">opt.methods</span> <span class="o">=</span> <span class="s">&#34;MaxKappa&#34;</span><span class="p">)</span>
+
+<span class="n">metrics_fit</span> <span class="o">&lt;-</span> <span class="n">rf_fitted</span> <span class="o">%&gt;%</span> 
+  <span class="nf">select</span><span class="p">(</span><span class="n">id</span><span class="p">,</span> <span class="n">obs</span><span class="p">,</span> <span class="n">fit</span><span class="p">)</span> <span class="o">%&gt;%</span> 
+  <span class="nf">presence.absence.accuracy</span><span class="p">(</span><span class="n">threshold</span> <span class="o">=</span> <span class="n">opt_thresh</span><span class="o">$</span><span class="n">fit</span><span class="p">,</span> 
+                            <span class="n">na.rm</span> <span class="o">=</span> <span class="kc">TRUE</span><span class="p">,</span> 
+                            <span class="n">st.dev</span> <span class="o">=</span> <span class="kc">FALSE</span><span class="p">)</span>
+<span class="n">metrics_cal</span> <span class="o">&lt;-</span> <span class="n">rf_fitted</span> <span class="o">%&gt;%</span> 
+  <span class="nf">select</span><span class="p">(</span><span class="n">id</span><span class="p">,</span> <span class="n">obs</span><span class="p">,</span> <span class="n">cal</span><span class="p">)</span> <span class="o">%&gt;%</span> 
+  <span class="nf">presence.absence.accuracy</span><span class="p">(</span><span class="n">threshold</span> <span class="o">=</span> <span class="n">opt_thresh</span><span class="o">$</span><span class="n">cal</span><span class="p">,</span> 
+                            <span class="n">na.rm</span> <span class="o">=</span> <span class="kc">TRUE</span><span class="p">,</span> 
+                            <span class="n">st.dev</span> <span class="o">=</span> <span class="kc">FALSE</span><span class="p">)</span>
+
+<span class="n">rf_assessment</span> <span class="o">&lt;-</span> <span class="nf">tibble</span><span class="p">(</span>
+  <span class="n">Model</span> <span class="o">=</span> <span class="nf">c</span><span class="p">(</span><span class="s">&#34;RF&#34;</span><span class="p">,</span> <span class="s">&#34;Calibrated RF&#34;</span><span class="p">),</span>
+  <span class="n">MSE</span> <span class="o">=</span> <span class="nf">c</span><span class="p">(</span><span class="n">mse_fit</span><span class="p">,</span> <span class="n">mse_cal</span><span class="p">),</span>
+  <span class="n">Sensitivity</span> <span class="o">=</span> <span class="nf">c</span><span class="p">(</span><span class="n">metrics_fit</span><span class="o">$</span><span class="n">sensitivity</span><span class="p">,</span> <span class="n">metrics_cal</span><span class="o">$</span><span class="n">sensitivity</span><span class="p">),</span>
+  <span class="n">Specificity</span> <span class="o">=</span> <span class="nf">c</span><span class="p">(</span><span class="n">metrics_fit</span><span class="o">$</span><span class="n">specificity</span><span class="p">,</span> <span class="n">metrics_cal</span><span class="o">$</span><span class="n">specificity</span><span class="p">),</span>
+  <span class="n">AUC</span> <span class="o">=</span> <span class="nf">c</span><span class="p">(</span><span class="n">metrics_fit</span><span class="o">$</span><span class="n">AUC</span><span class="p">,</span> <span class="n">metrics_cal</span><span class="o">$</span><span class="n">AUC</span><span class="p">),</span>
+  <span class="n">Kappa</span> <span class="o">=</span> <span class="nf">c</span><span class="p">(</span><span class="n">metrics_fit</span><span class="o">$</span><span class="n">Kappa</span><span class="p">,</span> <span class="n">metrics_cal</span><span class="o">$</span><span class="n">Kappa</span><span class="p">)</span>
+<span class="p">)</span>
+<span class="n">knitr</span><span class="o">::</span><span class="nf">kable</span><span class="p">(</span><span class="n">rf_assessment</span><span class="p">,</span> <span class="n">digits</span> <span class="o">=</span> <span class="m">3</span><span class="p">)</span> 
+</code></pre></div><table>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Model</th>
+<th style="text-align: right;">MSE</th>
+<th style="text-align: right;">Sensitivity</th>
+<th style="text-align: right;">Specificity</th>
+<th style="text-align: right;">AUC</th>
+<th style="text-align: right;">Kappa</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">RF</td>
+<td style="text-align: right;">0.167</td>
+<td style="text-align: right;">0.589</td>
+<td style="text-align: right;">0.854</td>
+<td style="text-align: right;">0.826</td>
+<td style="text-align: right;">0.445</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Calibrated RF</td>
+<td style="text-align: right;">0.143</td>
+<td style="text-align: right;">0.590</td>
+<td style="text-align: right;">0.854</td>
+<td style="text-align: right;">0.826</td>
+<td style="text-align: right;">0.445</td>
+</tr>
+</tbody>
+</table>
+<p>The GAM-calibrated forest has a small decrease in MSE but in general
+does not affect the metrics of the random forest.</p>
+<h3 id="variable-importance">Variable Importance</h3>
+<p>One of the major benefits of forest based models is the ability to rank
+the importance of an individual variable. The <code>vip</code> function ranks
+variables by their mean contribution to the overall model in terms of
+their variance. This plot is shown here:</p>
+<div class="highlight"><pre class="chroma"><code class="language-r" data-lang="r"><span class="nf">vip</span><span class="p">(</span><span class="n">rf</span><span class="p">)</span> <span class="o">+</span> 
+    <span class="nf">theme_bw</span><span class="p">()</span> <span class="o">+</span> 
+    <span class="nf">labs</span><span class="p">(</span><span class="n">title</span> <span class="o">=</span> <span class="s">&#34;Random Forest Variable Importance&#34;</span><span class="p">)</span> <span class="o">+</span>
+    <span class="nf">ylab</span><span class="p">(</span><span class="s">&#34;Importance&#34;</span><span class="p">)</span>
+</code></pre></div><p><img src="/static/figs/ebird-encounter/vip.png" alt="Figure 2: Variable Importance" title="VIP Plot"></p>
+<p>The two most important variables (by this metric) are the two elevation
+variables. This may make some sense - as nuthatches are less common in
+the prairies and croplands in the Western part of Minnesota. Going even
+further, we can observe how changing an individual variable (while
+keeping all other constant) affects the model’s predicted encounter
+rate. This is called a partial dependence plot - and it can be a useful
+tool for checking assumptions about a variable.</p>
+<div class="highlight"><pre class="chroma"><code class="language-r" data-lang="r"><span class="n">format_pdp_plot</span> <span class="o">&lt;-</span> <span class="nf">function</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">variable</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">plot</span> <span class="o">&lt;-</span> <span class="n">pdp</span><span class="o">::</span><span class="nf">partial</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> 
+                          <span class="n">pred.var</span> <span class="o">=</span> <span class="n">variable</span><span class="p">,</span>
+                          <span class="n">grid.resolution</span> <span class="o">=</span> <span class="m">40</span><span class="p">,</span>
+                          <span class="n">plot</span> <span class="o">=</span> <span class="kc">TRUE</span><span class="p">,</span> 
+                          <span class="n">plot.engine</span> <span class="o">=</span> <span class="s">&#34;ggplot2&#34;</span><span class="p">)</span>
+    <span class="n">plot</span> <span class="o">&lt;-</span> <span class="n">plot</span> <span class="o">+</span>
+        <span class="nf">theme_bw</span><span class="p">()</span> <span class="o">+</span> 
+        <span class="nf">theme</span><span class="p">(</span>
+            <span class="n">panel.grid</span> <span class="o">=</span> <span class="nf">element_blank</span><span class="p">(),</span>
+            <span class="n">axis.title.y</span> <span class="o">=</span> <span class="nf">element_blank</span><span class="p">()</span>
+        <span class="p">)</span>
+        
+    <span class="nf">return </span><span class="p">(</span><span class="n">plot</span><span class="p">)</span>
+<span class="p">}</span>
+<span class="n">pdp1</span> <span class="o">&lt;-</span> <span class="nf">format_pdp_plot</span><span class="p">(</span><span class="n">rf</span><span class="p">,</span> <span class="s">&#34;elevation_median&#34;</span><span class="p">)</span>
+<span class="n">pdp2</span> <span class="o">&lt;-</span> <span class="nf">format_pdp_plot</span><span class="p">(</span><span class="n">rf</span><span class="p">,</span> <span class="s">&#34;elevation_sd&#34;</span><span class="p">)</span>
+<span class="n">pdp3</span> <span class="o">&lt;-</span> <span class="nf">format_pdp_plot</span><span class="p">(</span><span class="n">rf</span><span class="p">,</span> <span class="s">&#34;day_of_year&#34;</span><span class="p">)</span>
+<span class="n">pdp4</span> <span class="o">&lt;-</span> <span class="nf">format_pdp_plot</span><span class="p">(</span><span class="n">rf</span><span class="p">,</span> <span class="s">&#34;pland_09_savanna&#34;</span><span class="p">)</span>
+<span class="n">pdp5</span> <span class="o">&lt;-</span> <span class="nf">format_pdp_plot</span><span class="p">(</span><span class="n">rf</span><span class="p">,</span> <span class="s">&#34;year&#34;</span><span class="p">)</span>
+<span class="n">pdp6</span> <span class="o">&lt;-</span> <span class="nf">format_pdp_plot</span><span class="p">(</span><span class="n">rf</span><span class="p">,</span> <span class="s">&#34;pland_13_urban&#34;</span><span class="p">)</span>
+<span class="n">pdp7</span> <span class="o">&lt;-</span> <span class="nf">format_pdp_plot</span><span class="p">(</span><span class="n">rf</span><span class="p">,</span> <span class="s">&#34;pland_08_woody_savanna&#34;</span><span class="p">)</span>
+<span class="n">pdp8</span> <span class="o">&lt;-</span> <span class="nf">format_pdp_plot</span><span class="p">(</span><span class="n">rf</span><span class="p">,</span> <span class="s">&#34;pland_12_cropland&#34;</span><span class="p">)</span>
+<span class="n">pdp9</span> <span class="o">&lt;-</span> <span class="nf">format_pdp_plot</span><span class="p">(</span><span class="n">rf</span><span class="p">,</span> <span class="s">&#34;pland_10_grassland&#34;</span><span class="p">)</span>
+
+<span class="n">combined_pdp</span> <span class="o">&lt;-</span> <span class="p">(</span><span class="n">pdp1</span> <span class="o">+</span> <span class="n">pdp2</span> <span class="o">+</span> <span class="n">pdp3</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">pdp4</span> <span class="o">+</span> <span class="n">pdp5</span> <span class="o">+</span> <span class="n">pdp6</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">pdp7</span> <span class="o">+</span> <span class="n">pdp8</span> <span class="o">+</span> <span class="n">pdp9</span><span class="p">)</span>
+
+<span class="n">combined_pdp</span> <span class="o">+</span> <span class="nf">plot_annotation</span><span class="p">(</span>
+  <span class="n">title</span> <span class="o">=</span> <span class="s">&#39;Partial Dependence Plots&#39;</span>
+<span class="p">)</span>
+</code></pre></div><p><img src="/static/figs/ebird-encounter/pdp.png" alt="Figure 3: Partial Dependence Plot" title="PDP Plot"></p>
+<p>There are a few interesting trends here: + The model predicts a higher
+encounter rate when the elevation is higher, and when the standard
+deviation of the elevation in a near a checklist is higher. + The
+cropland and woody savanna partial dependence plots appear to be mirrors
+of each other. + Lower predicted encounter rates in all urban areas. + A
+depressing decrease in encounter rate from 2010-2019 (this could also be
+interpreted as an overall increase in eBird data resulting in more
+checklists from backyard birders who may be less likely to see a
+Nuthatch). + A higher predicted encounter rate later in the month of May</p>
+<ul>
+<li>does breeding season start later for the Nuthatch?</li>
+</ul>
+<p>As with most plots of regression variables on their own - extreme
+caution should be taken when trying to interpret these causally. The
+calculation of a pdp holds every other variable constant, so we lose any
+interation between the variables.</p>
+<h2 id="plotting-encounter-rate">Plotting Encounter Rate</h2>
+<p>And finally - let’s plot the predicted encounter rate as a raster map on
+Minnesota. Essentially we want to associate each grid cell in Minnesota
+with the land and elevation variables. For this plot we will fix the
+month and the day of the year.</p>
+<div class="highlight"><pre class="chroma"><code class="language-r" data-lang="r"><span class="n">pred_surface_eff</span> <span class="o">&lt;-</span> <span class="n">pred_surface</span> <span class="o">%&gt;%</span> 
+    <span class="nf">mutate</span><span class="p">(</span><span class="n">month</span> <span class="o">=</span> <span class="m">5</span><span class="p">,</span>
+            <span class="n">day_of_year</span> <span class="o">=</span> <span class="m">15</span><span class="p">)</span> <span class="o">%&gt;%</span>
+    <span class="nf">relocate</span><span class="p">(</span><span class="n">month</span><span class="p">,</span> <span class="n">.before</span> <span class="o">=</span> <span class="n">year</span><span class="p">)</span> <span class="o">%&gt;%</span>
+    <span class="nf">relocate</span><span class="p">(</span><span class="n">day_of_year</span><span class="p">,</span> <span class="n">.after</span> <span class="o">=</span> <span class="n">year</span><span class="p">)</span>
+
+<span class="n">pred_surface_loc</span> <span class="o">&lt;-</span> <span class="nf">tibble</span><span class="p">(</span>
+    <span class="n">id</span> <span class="o">=</span> <span class="n">pred_surface_eff</span><span class="o">$</span><span class="n">id</span><span class="p">,</span>
+    <span class="n">longitude</span> <span class="o">=</span> <span class="n">pred_surface_eff</span><span class="o">$</span><span class="n">longitude</span><span class="p">,</span>
+    <span class="n">latitude</span> <span class="o">=</span> <span class="n">pred_surface_eff</span><span class="o">$</span><span class="n">latitude</span>
+<span class="p">)</span>
+
+<span class="n">pred_rf</span> <span class="o">&lt;-</span> <span class="nf">predict</span><span class="p">(</span><span class="n">rf</span><span class="p">,</span> <span class="n">data</span> <span class="o">=</span> <span class="nf">as.matrix</span><span class="p">(</span><span class="n">pred_surface_eff</span><span class="p">),</span> <span class="n">type</span> <span class="o">=</span> <span class="s">&#34;response&#34;</span><span class="p">)</span>
+    
+<span class="n">pred_rf</span> <span class="o">&lt;-</span> <span class="n">pred_rf</span><span class="o">$</span><span class="n">predictions[</span><span class="p">,</span> <span class="m">2</span><span class="n">]</span>
+<span class="n">pred_rf_cal</span> <span class="o">&lt;-</span> <span class="nf">tibble</span><span class="p">(</span><span class="n">pred_rf_cal</span> <span class="o">=</span> <span class="nf">predict</span><span class="p">(</span><span class="n">rf_calibration</span><span class="p">,</span> 
+                        <span class="nf">data.frame</span><span class="p">(</span><span class="n">rf_pred</span> <span class="o">=</span> <span class="n">pred_rf</span><span class="p">),</span> 
+                        <span class="n">type</span> <span class="o">=</span> <span class="s">&#34;response&#34;</span><span class="p">))</span>
+<span class="n">pred_er</span> <span class="o">&lt;-</span> <span class="nf">bind_cols</span><span class="p">(</span><span class="n">pred_surface_loc</span><span class="p">,</span> <span class="n">encounter_rate</span> <span class="o">=</span> <span class="n">pred_rf_cal</span><span class="o">$</span><span class="n">pred_rf_cal</span><span class="p">)</span> <span class="o">%&gt;%</span> 
+  <span class="nf">select</span><span class="p">(</span><span class="n">latitude</span><span class="p">,</span> <span class="n">longitude</span><span class="p">,</span> <span class="n">encounter_rate</span><span class="p">)</span> <span class="o">%&gt;%</span> 
+  <span class="nf">mutate</span><span class="p">(</span><span class="n">encounter_rate</span> <span class="o">=</span> <span class="nf">pmin</span><span class="p">(</span><span class="nf">pmax</span><span class="p">(</span><span class="n">encounter_rate</span><span class="p">,</span> <span class="m">0</span><span class="p">),</span> <span class="m">1</span><span class="p">))</span>
+</code></pre></div><p>Then we turn that prediction data frame into spatial features and then
+rasterize it. Finally, we project the raster into the format the map is
+expecting.</p>
+<div class="highlight"><pre class="chroma"><code class="language-r" data-lang="r"><span class="n">r_pred</span> <span class="o">&lt;-</span> <span class="n">pred_er</span> <span class="o">%&gt;%</span> 
+  <span class="nf">st_as_sf</span><span class="p">(</span><span class="n">coords</span> <span class="o">=</span> <span class="nf">c</span><span class="p">(</span><span class="s">&#34;longitude&#34;</span><span class="p">,</span> <span class="s">&#34;latitude&#34;</span><span class="p">),</span> <span class="n">crs</span> <span class="o">=</span> <span class="m">4326</span><span class="p">)</span> <span class="o">%&gt;%</span> 
+  <span class="nf">st_transform</span><span class="p">(</span><span class="n">crs</span> <span class="o">=</span> <span class="nf">projection</span><span class="p">(</span><span class="n">prediction_surface_raster</span><span class="p">))</span> <span class="o">%&gt;%</span> 
+  <span class="nf">rasterize</span><span class="p">(</span><span class="n">prediction_surface_raster</span><span class="p">)</span>
+<span class="n">r_pred</span> <span class="o">&lt;-</span> <span class="n">r_pred[[</span><span class="m">-1</span><span class="n">]]</span>
+<span class="n">r_pred_proj</span> <span class="o">&lt;-</span> <span class="nf">projectRaster</span><span class="p">(</span><span class="n">r_pred</span><span class="p">,</span> <span class="n">crs</span> <span class="o">=</span> <span class="n">map_proj</span><span class="o">$</span><span class="n">proj4string</span><span class="p">,</span> <span class="n">method</span> <span class="o">=</span> <span class="s">&#34;ngb&#34;</span><span class="p">)</span>
+
+<span class="n">r_pred_proj_spdf</span> <span class="o">=</span> <span class="nf">as</span><span class="p">(</span><span class="n">r_pred_proj</span><span class="p">,</span> <span class="s">&#34;SpatialPixelsDataFrame&#34;</span><span class="p">)</span>
+<span class="n">raster_df</span> <span class="o">&lt;-</span> <span class="nf">as.data.frame</span><span class="p">(</span><span class="n">r_pred_proj_spdf</span><span class="p">)</span>
+</code></pre></div><p>And plot it - with a similar zooming method that I used in the last
+ebird post.</p>
+<div class="highlight"><pre class="chroma"><code class="language-r" data-lang="r"><span class="n">get_display_window</span> <span class="o">&lt;-</span> <span class="nf">function</span><span class="p">(</span><span class="n">lat</span><span class="p">,</span> <span class="n">long</span><span class="p">,</span> <span class="n">zoom</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">zoom_to</span> <span class="o">&lt;-</span> <span class="nf">c</span><span class="p">(</span><span class="n">lat</span><span class="p">,</span> <span class="n">long</span><span class="p">)</span>
+  <span class="n">zoom_level</span> <span class="o">&lt;-</span> <span class="m">5</span>
+  
+  <span class="c1"># Lambert azimuthal equal-area projection around center of interest</span>
+  <span class="n">target_crs</span> <span class="o">&lt;-</span> <span class="n">map_proj</span><span class="o">$</span><span class="n">proj4string</span>
+  
+  <span class="n">C</span> <span class="o">&lt;-</span> <span class="m">40075016.686</span>   <span class="c1"># ~ circumference of Earth in meters</span>
+  <span class="n">x_span</span> <span class="o">&lt;-</span> <span class="n">C</span> <span class="o">/</span> <span class="m">2</span><span class="nf">^</span><span class="p">(</span><span class="n">zoom_level</span><span class="m">+0.5</span><span class="p">)</span>
+  <span class="n">y_span</span> <span class="o">&lt;-</span> <span class="n">C</span> <span class="o">/</span> <span class="m">2</span><span class="nf">^</span><span class="p">(</span><span class="n">zoom_level</span><span class="m">+0.95</span><span class="p">)</span>
+  
+  <span class="n">zoom_to_xy</span> <span class="o">&lt;-</span> <span class="nf">st_transform</span><span class="p">(</span><span class="nf">st_sfc</span><span class="p">(</span><span class="nf">st_point</span><span class="p">(</span><span class="n">zoom_to</span><span class="p">),</span> <span class="n">crs</span> <span class="o">=</span> <span class="m">4326</span><span class="p">),</span>
+                              <span class="n">crs</span> <span class="o">=</span> <span class="n">target_crs</span><span class="p">)</span>
+  
+  <span class="n">disp_window</span> <span class="o">&lt;-</span> <span class="nf">st_sfc</span><span class="p">(</span>
+      <span class="nf">st_point</span><span class="p">(</span><span class="nf">st_coordinates</span><span class="p">(</span><span class="n">zoom_to_xy</span> <span class="o">-</span> <span class="nf">c</span><span class="p">(</span><span class="n">x_span</span> <span class="o">/</span> <span class="m">2</span><span class="p">,</span> <span class="n">y_span</span> <span class="o">/</span> <span class="m">2</span><span class="p">))),</span>
+      <span class="nf">st_point</span><span class="p">(</span><span class="nf">st_coordinates</span><span class="p">(</span><span class="n">zoom_to_xy</span> <span class="o">+</span> <span class="nf">c</span><span class="p">(</span><span class="n">x_span</span> <span class="o">/</span> <span class="m">2</span><span class="p">,</span> <span class="n">y_span</span> <span class="o">/</span> <span class="m">2</span><span class="p">))),</span>
+      <span class="n">crs</span> <span class="o">=</span> <span class="n">target_crs</span>
+  <span class="p">)</span>
+  <span class="n">window_crs</span> <span class="o">&lt;-</span> <span class="nf">list</span><span class="p">(</span><span class="n">window</span> <span class="o">=</span> <span class="n">disp_window</span><span class="p">,</span> <span class="n">crs</span> <span class="o">=</span> <span class="n">target_crs</span><span class="p">)</span>
+  <span class="nf">return</span><span class="p">(</span><span class="n">window_crs</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="n">window_crs</span> <span class="o">&lt;-</span> <span class="nf">get_display_window</span><span class="p">(</span><span class="m">-94.3114</span><span class="p">,</span> <span class="m">46.278594</span><span class="p">,</span> <span class="m">5</span><span class="p">)</span>
+
+<span class="n">raster_df</span> <span class="o">%&gt;%</span>
+    <span class="nf">ggplot</span><span class="p">(</span><span class="n">data</span> <span class="o">=</span> <span class="n">.)</span> <span class="o">+</span> 
+    <span class="nf">geom_sf</span><span class="p">(</span><span class="n">data</span> <span class="o">=</span> <span class="n">ne_land</span><span class="p">,</span> <span class="n">color</span> <span class="o">=</span> <span class="s">&#34;white&#34;</span><span class="p">)</span> <span class="o">+</span> 
+    <span class="nf">geom_sf</span><span class="p">(</span><span class="n">data</span> <span class="o">=</span> <span class="n">ne_country_lines</span><span class="p">,</span> <span class="n">color</span> <span class="o">=</span> <span class="s">&#34;white&#34;</span><span class="p">)</span> <span class="o">+</span> 
+    <span class="nf">geom_sf</span><span class="p">(</span><span class="n">data</span> <span class="o">=</span> <span class="n">ne_state_lines</span><span class="p">,</span> <span class="n">color</span> <span class="o">=</span> <span class="s">&#34;white&#34;</span><span class="p">)</span> <span class="o">+</span> 
+    <span class="nf">geom_sf</span><span class="p">(</span><span class="n">data</span> <span class="o">=</span> <span class="n">mn_bound</span><span class="p">,</span> <span class="n">color</span> <span class="o">=</span> <span class="s">&#34;black&#34;</span><span class="p">,</span> <span class="n">size</span> <span class="o">=</span> <span class="m">1.5</span><span class="p">)</span> <span class="o">+</span> 
+    <span class="nf">geom_raster</span><span class="p">(</span><span class="n">mapping</span> <span class="o">=</span> <span class="nf">aes</span><span class="p">(</span><span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">y</span><span class="p">,</span> <span class="n">fill</span> <span class="o">=</span> <span class="n">encounter_rate</span><span class="p">))</span> <span class="o">+</span> 
+    <span class="nf">coord_sf</span><span class="p">(</span><span class="n">xlim</span> <span class="o">=</span> <span class="nf">st_coordinates</span><span class="p">(</span><span class="n">window_crs</span><span class="o">$</span><span class="n">window</span><span class="p">)</span><span class="n">[</span><span class="p">,</span><span class="s">&#39;X&#39;</span><span class="n">]</span><span class="p">,</span>
+              <span class="n">ylim</span> <span class="o">=</span> <span class="nf">st_coordinates</span><span class="p">(</span><span class="n">window_crs</span><span class="o">$</span><span class="n">window</span><span class="p">)</span><span class="n">[</span><span class="p">,</span><span class="s">&#39;Y&#39;</span><span class="n">]</span><span class="p">,</span>
+              <span class="n">crs</span> <span class="o">=</span> <span class="n">window_crs</span><span class="o">$</span><span class="n">crs</span><span class="p">,</span> <span class="n">datum</span> <span class="o">=</span> <span class="n">window_crs</span><span class="o">$</span><span class="n">crs</span><span class="p">)</span> <span class="o">+</span> 
+    <span class="nf">scale_fill_ghibli_c</span><span class="p">(</span><span class="s">&#34;YesterdayMedium&#34;</span><span class="p">)</span> <span class="o">+</span> 
+    <span class="nf">theme_bw</span><span class="p">()</span> <span class="o">+</span> 
+    <span class="nf">labs</span><span class="p">(</span><span class="n">title</span> <span class="o">=</span> <span class="s">&#34;White-Breasted Nuthatch Encounter Rate&#34;</span><span class="p">,</span> 
+          <span class="n">subtitle</span> <span class="o">=</span> <span class="s">&#34;Minnesota, May&#34;</span><span class="p">,</span>
+          <span class="n">caption</span> <span class="o">=</span> <span class="s">&#34;Scale corresponds to probability of encounter at given location.&#34;</span><span class="p">,</span>
+          <span class="n">fill</span> <span class="o">=</span> <span class="s">&#34;Encounter\nRate&#34;</span><span class="p">)</span> <span class="o">+</span> 
+    <span class="nf">theme</span><span class="p">(</span><span class="n">panel.background</span> <span class="o">=</span> <span class="nf">element_blank</span><span class="p">(),</span>
+          <span class="n">axis.text</span> <span class="o">=</span> <span class="nf">element_blank</span><span class="p">(),</span>
+          <span class="n">axis.ticks</span> <span class="o">=</span> <span class="nf">element_blank</span><span class="p">(),</span>
+          <span class="n">panel.grid</span> <span class="o">=</span> <span class="nf">element_blank</span><span class="p">(),</span>
+          <span class="n">axis.title</span> <span class="o">=</span> <span class="nf">element_blank</span><span class="p">()</span>
+          <span class="p">)</span>
+</code></pre></div><p><img src="/static/figs/ebird-encounter/map.png" alt="Figure 4: Encounter Rate Map" title="Encounter Rate Map"></p>
+<p>We observe a low predicted encounter rate in the western croplands. The
+the bulk of the region with high predicted encounter rates corresponds
+to <a href="https://nabci-us.org/resources/bird-conservation-regions-map/">bird conservation region
+23</a>
+(prairie-woodland transition) - seen below from the website
+<a href="https://umgljv.org/planning/state-by-bcr-plans/">https://umgljv.org/planning/state-by-bcr-plans/</a>.</p>
+<center>
+<figure>
+<img src="/static/figs/ebird-encounter/BCRs-720.png" style="width:50.0%" alt="Upper Midwest BCR regions" /><figcaption aria-hidden="true">Upper Midwest BCR regions</figcaption>
+</figure>
+</center>
+<h3 id="final-thoughts">Final thoughts</h3>
+<p>This post explored using eBird checklist data along with habitat
+variables to predict the chance of encountering the White Breasted
+Nuthatch in Minnesota. It would be interesting to explore these methods
+with a more rare species like the Hermit Thrush (one of my faves) - or
+to compare the encounter rate maps calculated for each month to
+published species extent maps.</p>
+</article>
+
+        </main><footer id="footer">
+    copyright © 2022 kellen mulford
+</footer>
+</body>
+</html>

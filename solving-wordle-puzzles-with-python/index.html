@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html><head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Portfolio Site">
+    
+    <link rel="shortcut icon" href="https://mulfordkl.github.io/favicon.ico">
+    
+    <link rel="stylesheet" href="/css/style.min.css">
+    <title>solving wordle puzzles with python</title>
+</head>
+<body><header id="banner">
+    <h2><a href="https://mulfordkl.github.io">kellen  mulford</a></h2>
+    <nav>
+        <ul>
+            <li>
+                <a href="/" title="posts">projects</a>
+            </li><li>
+                <a href="/tags/" title="tags">tags</a>
+            </li><li>
+                <a href="/about/" title="about">about</a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main id="content">
+<article>
+    <header id="post-header">
+        <h1>solving wordle puzzles with python</h1>
+            <div>
+                <time>January 4, 2022</time>
+                </div>
+    </header><p><a href="https://www.powerlanguage.co.uk/wordle/">Wordle</a> is a fun little word puzzle that is very similar to the game Mastermind. The player gets 6 guesses to correctly identify a hidden 5 letter word and after each guess is told whether each letter of the guessed word was:</p>
+<ol>
+<li>The correct letter in the correct location</li>
+<li>One of the letters in the true word but in the wrong location</li>
+<li>Not in the true word</li>
+</ol>
+<p>Clearly a computer algorithm given a candidate list of 5 letter words and the hints following the guesses could come to a reasonable solution. The most simple version is a narrowing algorithm that for each guess-check turn eliminates words from the list of possible words by checking if each letter in the word is compatible with the hints from the guess.</p>
+<p>That is essentially what I have written a little program to do - you can see the code <a href="https://github.com/mulfordkl/wordle-solver">here</a>. The function to narrow the list of words is:</p>
+<div class="highlight"><pre class="chroma"><code class="language-python" data-lang="python"><span class="k">def</span> <span class="nf">narrow_words</span><span class="p">(</span><span class="n">valid_words</span><span class="p">,</span> <span class="n">hints</span><span class="p">):</span>
+    <span class="n">allowed_words</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">word</span> <span class="ow">in</span> <span class="n">valid_words</span><span class="p">:</span>
+        <span class="n">allowed_flag</span> <span class="o">=</span> <span class="bp">True</span>
+        <span class="n">word_arr</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">word</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">word_arr</span><span class="p">)):</span>
+            <span class="c1"># hint &#34;g&#34; means letter is correct</span>
+            <span class="k">if</span> <span class="n">hints</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="s2">&#34;val&#34;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&#34;g&#34;</span> <span class="ow">and</span> <span class="n">word_arr</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">!=</span> <span class="n">hints</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="s2">&#34;letter&#34;</span><span class="p">]:</span>
+                <span class="n">allowed_flag</span> <span class="o">=</span> <span class="bp">False</span>
+                <span class="k">break</span>
+            <span class="c1"># hint &#34;y&#34; means letter is in word but in wrong place</span>
+            <span class="k">elif</span> <span class="n">hints</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="s2">&#34;val&#34;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&#34;y&#34;</span> <span class="ow">and</span> <span class="p">(</span><span class="n">hints</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="s2">&#34;letter&#34;</span><span class="p">]</span> <span class="o">==</span> <span class="n">word</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="ow">or</span> <span class="n">hints</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="s2">&#34;letter&#34;</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">word_arr</span><span class="p">):</span>
+                <span class="n">allowed_flag</span> <span class="o">=</span> <span class="bp">False</span>
+                <span class="k">break</span>
+            <span class="c1"># hint &#34;b&#34; means letter is not in word</span>
+            <span class="k">elif</span> <span class="n">hints</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="s2">&#34;val&#34;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&#34;b&#34;</span> <span class="ow">and</span> <span class="n">hints</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="s2">&#34;letter&#34;</span><span class="p">]</span> <span class="ow">in</span> <span class="n">word_arr</span><span class="p">:</span>
+                <span class="n">allowed_flag</span> <span class="o">=</span> <span class="bp">False</span>
+                <span class="k">break</span>
+        <span class="k">if</span> <span class="n">allowed_flag</span><span class="p">:</span>
+            <span class="n">allowed_words</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">word</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">allowed_words</span>
+</code></pre></div><p>One of the decisions the algorithm has to make is to select a word from the list of still-allowed words. My brother suggested selecting the most popular word (from a list where the words are ordered by popularity in common usage), while my initial thought was to select a random word. The question really has morphed from an algorithm question to a statistics question. If the creator of Wordle is selecting words that are more popular more frequently, my brother&rsquo;s susggestion is a good one. But if the words are selected randomly - choosing randomly will be better. I&rsquo;ve implemented both, and a hybrid that chooses from randomly from the top 10% of the valid words.</p>
+<div class="highlight"><pre class="chroma"><code class="language-python" data-lang="python"><span class="k">def</span> <span class="nf">get_word</span><span class="p">(</span><span class="n">word_list</span><span class="p">,</span> <span class="n">method</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">&#34;most_popular&#34;</span><span class="p">:</span>
+        <span class="n">index</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">&#34;rand_most_popular&#34;</span><span class="p">:</span>
+        <span class="n">index</span> <span class="o">=</span> <span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">round</span><span class="p">(</span><span class="mf">0.10</span><span class="o">*</span><span class="nb">len</span><span class="p">(</span><span class="n">word_list</span><span class="p">),</span> <span class="mi">0</span><span class="p">))</span>   
+    <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">&#34;random&#34;</span><span class="p">:</span>
+        <span class="n">index</span>  <span class="o">=</span> <span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">word_list</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">index</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">return</span> <span class="n">word_list</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
+</code></pre></div><p>I found a list of 5 letter words sorted by popularity <a href="https://www-cs-faculty.stanford.edu/~knuth/sgb-words.txt">here</a> that has almost 6000 entries. I tested the algorithm(s) by randomly sampling the true word from the list 10,000 times. The play game function returns whether the algorithm found the solution and in how many steps. Here are the results:</p>
+<pre><code>Results selecting the most popular word at each loop
+Not Solved:	789	times (7.89%)
+1 Turns:	3	times (0.0%)
+2 Turns:	97	times (1.0%)
+3 Turns:	1125	times (11.2%)
+4 Turns:	3180	times (31.8%)
+5 Turns:	3222	times (32.2%)
+6 Turns:	1584	times (15.8%)
+
+
+
+Results selecting a random word at each loop
+Not Solved:	962	times (9.62%)
+1 Turns:	2	times (0.0%)
+2 Turns:	196	times (2.0%)
+3 Turns:	1484	times (14.8%)
+4 Turns:	3169	times (31.7%)
+5 Turns:	2816	times (28.2%)
+6 Turns:	1371	times (13.7%)
+
+
+
+Results selecting from the most popular 10% of words at each loop
+Not Solved:	858	times (8.58%)
+1 Turns:	3	times (0.0%)
+2 Turns:	111	times (1.1%)
+3 Turns:	1100	times (11.0%)
+4 Turns:	3223	times (32.2%)
+5 Turns:	3165	times (31.6%)
+6 Turns:	1540	times (15.4%)
+</code></pre><p>The more random the selection becomes the higher the overall did-not-solve rate becomes, while lowering the average turns to solve. Overall the algorithms have solve rates over 90% and an average turns to solve of about 4 - that&rsquo;s about as good as I&rsquo;ve been solving them by hand!</p>
+<h4 id="final-thoughts">Final Thoughts</h4>
+<p>I think there may be more clever ways to select the word - including trying to maximize the number of different letters used or by preferentially selecting words with more vowels which may eliminate words more quickly. A quick glance at the wikipedia page for Mastermind suggests using a <a href="https://en.wikipedia.org/wiki/Mastermind_(board_game)">minimax selection method</a> (from TAOCP author Donald Knuth). I took a glance at the source code for the Wordle site and I do think the word list is included in the minifies javascript function - but I&rsquo;m not trying to take all the fun out of it!</p>
+</article>
+
+        </main><footer id="footer">
+    copyright © 2022 kellen mulford
+</footer>
+</body>
+</html>

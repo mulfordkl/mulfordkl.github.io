@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html><head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Portfolio Site">
+    
+    <link rel="shortcut icon" href="https://mulfordkl.github.io/favicon.ico">
+    
+    <link rel="stylesheet" href="/css/style.min.css">
+    <title>a shiny app to visualize radiologist agreement data</title>
+</head>
+<body><header id="banner">
+    <h2><a href="https://mulfordkl.github.io">kellen  mulford</a></h2>
+    <nav>
+        <ul>
+            <li>
+                <a href="/" title="posts">projects</a>
+            </li><li>
+                <a href="/tags/" title="tags">tags</a>
+            </li><li>
+                <a href="/about/" title="about">about</a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main id="content">
+<article>
+    <header id="post-header">
+        <h1>a shiny app to visualize radiologist agreement data</h1>
+            <div>
+                <time>June 21, 2021</time>
+                </div>
+    </header><h3 id="see-the-app-here-linkhttpsmulfordklshinyappsionvc_reads">See the app here: <a href="https://mulfordkl.shinyapps.io/nvc_reads/">Link</a></h3>
+<p>One of the research projects I am currently working on is to establish the level of variability in radiologist reads of neurovascular conflict of the trigeminal nerve from skull base MRI. The level of variability in these reads matters because surgeons utilize skull base MRI when deciding which patients with trigeminal neuralgia would be good candidates for a surgical procedure called microvascular decompression, where blood vessels and arachnoid structures are separated from the trigeminal nerve.</p>
+<p>The first step of this project was to identify skull base MRI of sufficient quality and resolution that capture the course of the trigeminal nerve from the Pons through Meckel&rsquo;s Cave. We did a search of our PACS database for MRI studies with the words &ldquo;trigeminal&rdquo; &ldquo;skull base&rdquo; &ldquo;CISS&rdquo; &ldquo;SPACE&rdquo; contained in the description. CISS and SPACE are T2 like sequences commonly used in skull base imaging for their impressive csf-brain matter contrast.</p>
+<p>This search resulted in 2000+ candidate scans, which were manually screened for image quality. Our final dataset consists of over 1000 cases, which means 2000 trigeminal nerves. These scans were anonymized, assigned a study ID, and batched into groups of 20 scans apiece.</p>
+<p>Next the four radiologists who didn&rsquo;t know what they were signing up for independently read all 1000+ scans (2000+ nerves) for four items.</p>
+<ol>
+<li>Degree of neurovascular conflict from (0) no conflict, (1) abutment of nearby vessels on the trigeminal nerve, (2) compression of the nerve by nearby vessels. If there is some kind of neurovascular conflict, the radiologists record the following three fields:</li>
+<li>Surface of the trigeminal nerve impacted by the vascular structures.</li>
+<li>Whether the conflict is arterial, venous, mixed, or unclear.</li>
+<li>The distance measured anteriorly along the nerve from the Pons that the conflict occurs.</li>
+</ol>
+<p>The radiologists are in the middle of doing these reads. I was calculating agreement statistics and various other visualizations on the groups of data, which I would knit into HTML reports using R&rsquo;s R Markdown functionality to share with the group and my mentors. I had it set up pretty slick, where I needed to change a few parameters to get reports for different ranges of the data and with different groups of the readers, but it still required me to reknit the report each time I wanted to see a different range of data.</p>
+<p>The solution? A shiny app!</p>
+<p>This was fun to work on. I have built other full-stack applications, and where shiny development differs is in its focus. Largely, the actual HTML and CSS work is taken care of behind the scenes, allowing the app writer to focus on the calculations, the visualizations, and the user input. As most of the statistics scripts were already built for my HTML reports, most of the code I wrote for the shiny app was in the UI and Server files.</p>
+<p>You can see the app at this <a href="https://mulfordkl.shinyapps.io/nvc_reads/">Link</a>.</p>
+</article>
+
+        </main><footer id="footer">
+    copyright © 2022 kellen mulford
+</footer>
+</body>
+</html>

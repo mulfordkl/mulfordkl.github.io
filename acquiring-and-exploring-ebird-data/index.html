@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html><head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Portfolio Site">
+    
+    <link rel="shortcut icon" href="https://mulfordkl.github.io/favicon.ico">
+    
+    <link rel="stylesheet" href="/css/style.min.css">
+    <title>acquiring and exploring eBird data</title>
+</head>
+<body><header id="banner">
+    <h2><a href="https://mulfordkl.github.io">kellen  mulford</a></h2>
+    <nav>
+        <ul>
+            <li>
+                <a href="/" title="posts">projects</a>
+            </li><li>
+                <a href="/tags/" title="tags">tags</a>
+            </li><li>
+                <a href="/about/" title="about">about</a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main id="content">
+<article>
+    <header id="post-header">
+        <h1>acquiring and exploring eBird data</h1>
+            <div>
+                <time>December 2, 2021</time>
+                </div>
+    </header><p>I took up birding during a summer I spent at St. Olaf College working in
+a lab that did electrophysiological experiments on the retinas of
+snapping turtles. Hours in a dark room waiting for light-stimuli
+experiments to run were magnitudes more interesting when I was working
+through Frank Gill’s <em>Ornithology</em> or thinking about the birds I’d see
+during my walks to and from the science building. I became acquainted
+with eBird then as a tool to keep track of the birds I’d seen. For those
+not in the know, eBird is a Cornell Lab of Ornithology Citizen Science
+project where birders all across the world log their birding trips, what
+birds they see, and where they saw them.<br></p>
+<p>Fast forward 4 years and I discover you can just get eBird data??!! All
+of it??!! With all the data analysis and machine learning tools I’d
+built up over the years this seemed like a prime opportunity to combine
+my technical skills with something I really enjoy. This and the next few
+posts will document my exploration of the eBird dataset. I will focus on
+the specific example of one of my favorite birds, the White-Breasted
+Nuthatch (<em>Sitta Carolinesis</em>), in my home state of Minnesota.</p>
+<p>My initial excitement to access all the data was muted when I learned
+the whole dataset comprises 600 million birding checklists and hundreds
+of GBs of data. Luckily the talented people at the Cornell Lab have
+built a handy R package called auk (based off the bird and the command
+line tool awk) to efficiently filter the data.</p>
+<p>I heavily referenced the online guide: <a href="https://cornelllabofornithology.github.io/ebird-best-practices/index.html">eBird Best
+Practices</a>
+in my exploration. It is very well written and an extremely good guide
+to get started using eBird data. I start by importing libraries.</p>
+<div class="highlight"><pre class="chroma"><code class="language-r" data-lang="r"><span class="nf">library</span><span class="p">(</span><span class="n">auk</span><span class="p">)</span>
+<span class="nf">library</span><span class="p">(</span><span class="n">lubridate</span><span class="p">)</span>
+<span class="nf">library</span><span class="p">(</span><span class="n">sf</span><span class="p">)</span>
+<span class="nf">library</span><span class="p">(</span><span class="n">gridExtra</span><span class="p">)</span>
+<span class="nf">library</span><span class="p">(</span><span class="n">tidyverse</span><span class="p">)</span>
+<span class="nf">library</span><span class="p">(</span><span class="n">here</span><span class="p">)</span>
+<span class="nf">library</span><span class="p">(</span><span class="n">knitr</span><span class="p">)</span>
+<span class="nf">library</span><span class="p">(</span><span class="n">kableExtra</span><span class="p">)</span>
+</code></pre></div><p>However, the very first thing I had to do was use my eBird account to
+download the eBird dataset. As I knew I was going to focus on Minnesota,
+I downloaded a smaller version of the complete dataset, restricted to
+checklists in Minnesota. The total unzipped file size was around 17Gb -
+much more manageable!</p>
+<hr>
+<h3 id="whittling-the-data-down">Whittling the data down</h3>
+<p>As mentioned above, I will use the auk library to filter the dataset
+down into something manageable and workable.</p>
+<div class="highlight"><pre class="chroma"><code class="language-r" data-lang="r"><span class="c1"># setup data directory</span>
+<span class="nf">if </span><span class="p">(</span><span class="o">!</span><span class="nf">dir.exists</span><span class="p">(</span><span class="nf">here</span><span class="p">(</span><span class="s">&#34;data&#34;</span><span class="p">)))</span> <span class="p">{</span>
+  <span class="nf">dir.create</span><span class="p">(</span><span class="nf">here</span><span class="p">(</span><span class="s">&#34;data&#34;</span><span class="p">))</span>
+<span class="p">}</span>
+
+<span class="n">species</span> <span class="o">&lt;-</span> <span class="s">&#34;White-breasted Nuthatch&#34;</span>
+<span class="n">region</span> <span class="o">&lt;-</span> <span class="s">&#34;US-MN&#34;</span>
+
+<span class="c1"># Note - I previously pointed auk to where I keep my data</span>
+<span class="n">ebd</span> <span class="o">&lt;-</span> <span class="nf">auk_ebd</span><span class="p">(</span><span class="s">&#34;ebd_US-MN_relAug-2021.txt&#34;</span><span class="p">,</span> 
+               <span class="n">file_sampling</span> <span class="o">=</span> <span class="s">&#34;ebd_sampling_relAug-2021.txt&#34;</span><span class="p">)</span>
+
+<span class="c1"># Construct filters</span>
+<span class="n">ebd_filters</span> <span class="o">&lt;-</span> <span class="n">ebd</span> <span class="o">%&gt;%</span> 
+  <span class="nf">auk_species</span><span class="p">(</span><span class="s">&#34;White-breasted Nuthatch&#34;</span><span class="p">)</span> <span class="o">%&gt;%</span>
+  <span class="nf">auk_state</span><span class="p">(</span><span class="s">&#34;US-MN&#34;</span><span class="p">)</span> <span class="o">%&gt;%</span>
+  <span class="nf">auk_protocol</span><span class="p">(</span><span class="n">protocol</span> <span class="o">=</span> <span class="nf">c</span><span class="p">(</span><span class="s">&#34;Stationary&#34;</span><span class="p">,</span> <span class="s">&#34;Traveling&#34;</span><span class="p">))</span> <span class="o">%&gt;%</span> 
+  <span class="nf">auk_complete</span><span class="p">()</span>
+
+<span class="c1"># output files</span>
+
+
+<span class="n">ebird_file_out</span> <span class="o">&lt;-</span> <span class="nf">here</span><span class="p">(</span><span class="s">&#34;data&#34;</span><span class="p">,</span> <span class="s">&#34;ebd_nuthatch_yearround_mn.txt&#34;</span><span class="p">)</span>
+<span class="n">sampling_file_out</span> <span class="o">&lt;-</span> <span class="nf">here</span><span class="p">(</span><span class="s">&#34;data&#34;</span><span class="p">,</span> <span class="s">&#34;ebd_checklists_yearround_mn.txt&#34;</span><span class="p">)</span>
+
+<span class="c1"># Perform the actual filtering if the files do not already exist.</span>
+<span class="nf">if </span><span class="p">(</span><span class="o">!</span><span class="nf">file.exists</span><span class="p">(</span><span class="n">ebird_file_out</span><span class="p">))</span> <span class="p">{</span>
+  <span class="nf">auk_filter</span><span class="p">(</span><span class="n">ebd_filters</span><span class="p">,</span> <span class="n">file</span> <span class="o">=</span> <span class="n">ebird_file_out</span><span class="p">,</span> <span class="n">file_sampling</span> <span class="o">=</span> <span class="n">sampling_file_out</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></div><p>With the filtering complete I was left with two files - one ~180MB file
+containing all the sampling data in MN (think metadata of the
+checklists, one row per checklist), and one ~73.2MB file containing all
+the observation data in MN (the actual bird sightings, one row per bird
+sighting). I use the auk_zerofill function to combine these two files
+into one dataframe that contains all the information about the
+checklists and which checklists include the Nuthatch. The Best Practices
+eBook also suggests applying some filters to the “effort” variables to
+obtain more realistic ecological predictions - so I restrict the data to
+only include checklists that took less than 5 hours, traveled less than
+5km, and included less than 10 observers.</p>
+<div class="highlight"><pre class="chroma"><code class="language-r" data-lang="r"><span class="n">ebird_zerofill</span> <span class="o">&lt;-</span> <span class="nf">auk_zerofill</span><span class="p">(</span><span class="n">ebird_file_out</span><span class="p">,</span> <span class="n">sampling_file_out</span><span class="p">,</span> <span class="n">collapse</span> <span class="o">=</span> <span class="kc">TRUE</span><span class="p">)</span>
+
+<span class="c1"># function to convert time observation to hours since midnight</span>
+<span class="n">time_to_decimal</span> <span class="o">&lt;-</span> <span class="nf">function</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">x</span> <span class="o">&lt;-</span> <span class="nf">hms</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">quiet</span> <span class="o">=</span> <span class="kc">TRUE</span><span class="p">)</span>
+  <span class="nf">hour</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">+</span> <span class="nf">minute</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">/</span> <span class="m">60</span> <span class="o">+</span> <span class="nf">second</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">/</span> <span class="m">3600</span>
+<span class="p">}</span>
+
+<span class="c1"># clean up variables</span>
+<span class="n">ebird_zerofill</span> <span class="o">&lt;-</span> <span class="n">ebird_zerofill</span> <span class="o">%&gt;%</span> 
+  <span class="nf">mutate</span><span class="p">(</span>
+    <span class="n">observation_count</span> <span class="o">=</span> <span class="nf">if_else</span><span class="p">(</span><span class="n">observation_count</span> <span class="o">==</span> <span class="s">&#34;X&#34;</span><span class="p">,</span> <span class="kc">NA_character_</span><span class="p">,</span> <span class="n">observation_count</span><span class="p">),</span>
+    <span class="n">observation_count</span> <span class="o">=</span> <span class="nf">as.integer</span><span class="p">(</span><span class="n">observation_count</span><span class="p">),</span>
+    <span class="n">effort_distance_km</span> <span class="o">=</span> <span class="nf">if_else</span><span class="p">(</span><span class="n">protocol_type</span> <span class="o">!=</span> <span class="s">&#34;Traveling&#34;</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="n">effort_distance_km</span><span class="p">),</span>
+    <span class="n">time_observations_started</span> <span class="o">=</span> <span class="nf">time_to_decimal</span><span class="p">(</span><span class="n">time_observations_started</span><span class="p">),</span>
+    <span class="n">year</span> <span class="o">=</span> <span class="nf">year</span><span class="p">(</span><span class="n">observation_date</span><span class="p">),</span>
+    <span class="n">day_of_year</span> <span class="o">=</span> <span class="nf">yday</span><span class="p">(</span><span class="n">observation_date</span><span class="p">)</span>
+  <span class="p">)</span>
+
+<span class="n">ebird_zerofill_filtered</span> <span class="o">&lt;-</span> <span class="n">ebird_zerofill</span> <span class="o">%&gt;%</span> 
+  <span class="nf">filter</span><span class="p">(</span><span class="n">duration_minutes</span> <span class="o">&lt;=</span> <span class="m">5</span> <span class="o">*</span> <span class="m">60</span><span class="p">,</span>
+         <span class="n">effort_distance_km</span> <span class="o">&lt;=</span> <span class="m">5</span><span class="p">,</span>
+         <span class="n">year</span> <span class="o">&gt;=</span> <span class="m">2010</span><span class="p">,</span>
+         <span class="n">number_observers</span> <span class="o">&lt;=</span> <span class="m">10</span><span class="p">)</span>
+
+<span class="n">nuthatch_mn_data</span> <span class="o">&lt;-</span> <span class="n">ebird_zerofill_filtered</span> <span class="o">%&gt;%</span> 
+  <span class="n">dplyr</span><span class="o">::</span><span class="nf">select</span><span class="p">(</span><span class="n">checklist_id</span><span class="p">,</span> <span class="n">observer_id</span><span class="p">,</span> <span class="n">sampling_event_identifier</span><span class="p">,</span>
+                <span class="n">bcr_code</span><span class="p">,</span>
+                <span class="n">county</span><span class="p">,</span>
+                <span class="n">scientific_name</span><span class="p">,</span>
+                <span class="n">observation_count</span><span class="p">,</span> <span class="n">species_observed</span><span class="p">,</span> 
+                <span class="n">state_code</span><span class="p">,</span> <span class="n">locality_id</span><span class="p">,</span> <span class="n">latitude</span><span class="p">,</span> <span class="n">longitude</span><span class="p">,</span>
+                <span class="n">protocol_type</span><span class="p">,</span> <span class="n">all_species_reported</span><span class="p">,</span>
+                <span class="n">observation_date</span><span class="p">,</span> <span class="n">year</span><span class="p">,</span> <span class="n">day_of_year</span><span class="p">,</span>
+                <span class="n">time_observations_started</span><span class="p">,</span> 
+                <span class="n">duration_minutes</span><span class="p">,</span> <span class="n">effort_distance_km</span><span class="p">,</span>
+                <span class="n">number_observers</span><span class="p">)</span>
+
+<span class="nf">write_csv</span><span class="p">(</span><span class="n">nuthatch_mn_data</span><span class="p">,</span> <span class="nf">here</span><span class="p">(</span><span class="s">&#34;data&#34;</span><span class="p">,</span><span class="s">&#34;ebd_whbrnuthatch_yearround_mn_zf.csv&#34;</span><span class="p">),</span> <span class="n">na</span> <span class="o">=</span> <span class="s">&#34;&#34;</span><span class="p">)</span>
+</code></pre></div><p>The filtering removed about 110,000 checklists out of the 680,000 total.
+Now the data is encapsulated in a nice tidy dataframe, and we can start
+to explore the characteristics of the data.</p>
+<hr>
+<h3 id="exploring-the-data">Exploring the data</h3>
+<p>First question, how many checklists sighted the White-Breasted Nuthatch?</p>
+<div class="highlight"><pre class="chroma"><code class="language-r" data-lang="r"><span class="n">nuthatch_mn_data</span> <span class="o">%&gt;%</span>
+  <span class="nf">group_by</span><span class="p">(</span><span class="n">species_observed</span><span class="p">)</span> <span class="o">%&gt;%</span>
+  <span class="nf">summarize</span><span class="p">(</span><span class="n">Total</span> <span class="o">=</span> <span class="nf">n</span><span class="p">(),</span> <span class="n">Percentage</span> <span class="o">=</span> <span class="nf">round</span><span class="p">(</span><span class="nf">n</span><span class="p">()</span><span class="o">/</span><span class="nf">nrow</span><span class="p">(</span><span class="n">nuthatch_mn_data</span><span class="p">)</span><span class="o">*</span><span class="m">100</span><span class="p">,</span> <span class="m">2</span><span class="p">))</span> <span class="o">%&gt;%</span>
+  <span class="nf">rename</span><span class="p">(</span><span class="s">&#34;Species Observed&#34;</span> <span class="o">=</span> <span class="n">species_observed</span><span class="p">)</span> <span class="o">%&gt;%</span>
+  <span class="nf">kable</span><span class="p">()</span>
+</code></pre></div><table>
+<thead>
+<tr>
+<th style="text-align:left;">
+Species Observed
+</th>
+<th style="text-align:right;">
+Total
+</th>
+<th style="text-align:right;">
+Percentage
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+FALSE
+</td>
+<td style="text-align:right;">
+406573
+</td>
+<td style="text-align:right;">
+71.46
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+TRUE
+</td>
+<td style="text-align:right;">
+162412
+</td>
+<td style="text-align:right;">
+28.54
+</td>
+</tr>
+</tbody>
+</table>
+<p>Overall about 3 in 10 checklists include a Nuthatch (when I refer to
+Nuthatch in this post, I always mean the White-Breasted variety). What
+if we also group by month?</p>
+<p><img src="/static/figs/ebird-explore/sightings-by-month.png" alt="Figure 1: Sightings by Month" title="Table of Sightings"></p>
+<p>Anecdotally - It is easier to see the White-Breasted Nuthatch when the
+trees have lost their foliage, so I am not surprised that checklists in
+the fall and winter months have the highest percentage of Nuthatch
+sightings. Nuthatches tend to scamper up and down trees looking for
+food, and in face their feet are designed to support them upside down
+and right-side up. We can also visualize the number of checklists and
+sightings by the time of day (birders are morning people). This example
+was also done in eBird Best Practices.</p>
+<div class="highlight"><pre class="chroma"><code class="language-r" data-lang="r"><span class="c1"># summarize data by hourly bins</span>
+<span class="n">breaks</span> <span class="o">&lt;-</span> <span class="m">0</span><span class="o">:</span><span class="m">24</span>
+<span class="n">labels</span> <span class="o">&lt;-</span> <span class="n">breaks[</span><span class="o">-</span><span class="nf">length</span><span class="p">(</span><span class="n">breaks</span><span class="p">)</span><span class="n">]</span> <span class="o">+</span> <span class="nf">diff</span><span class="p">(</span><span class="n">breaks</span><span class="p">)</span> <span class="o">/</span> <span class="m">2</span>
+
+<span class="n">nuthatch_mn_data</span> <span class="o">%&gt;%</span> 
+  <span class="nf">mutate</span><span class="p">(</span><span class="n">tod_bins</span> <span class="o">=</span> <span class="nf">cut</span><span class="p">(</span><span class="n">time_observations_started</span><span class="p">,</span> 
+                        <span class="n">breaks</span> <span class="o">=</span> <span class="n">breaks</span><span class="p">,</span> 
+                        <span class="n">labels</span> <span class="o">=</span> <span class="n">labels</span><span class="p">,</span>
+                        <span class="n">include.lowest</span> <span class="o">=</span> <span class="kc">TRUE</span><span class="p">),</span>
+         <span class="n">tod_bins</span> <span class="o">=</span> <span class="nf">as.numeric</span><span class="p">(</span><span class="nf">as.character</span><span class="p">(</span><span class="n">tod_bins</span><span class="p">)))</span> <span class="o">%&gt;%</span> 
+  <span class="nf">group_by</span><span class="p">(</span><span class="n">tod_bins</span><span class="p">)</span> <span class="o">%&gt;%</span> 
+  <span class="nf">summarise</span><span class="p">(</span><span class="n">n_checklists</span> <span class="o">=</span> <span class="nf">n</span><span class="p">(),</span>
+            <span class="n">n_detected</span> <span class="o">=</span> <span class="nf">sum</span><span class="p">(</span><span class="n">species_observed</span><span class="p">),</span>
+            <span class="n">det_freq</span> <span class="o">=</span> <span class="nf">round</span><span class="p">(</span><span class="nf">mean</span><span class="p">(</span><span class="n">species_observed</span><span class="p">)</span><span class="o">*</span><span class="m">100</span><span class="p">,</span><span class="m">0</span><span class="p">))</span> <span class="o">%&gt;%</span>
+  <span class="nf">ggplot</span><span class="p">()</span> <span class="o">+</span>
+    <span class="nf">geom_col</span><span class="p">(</span><span class="n">mapping</span> <span class="o">=</span> <span class="nf">aes</span><span class="p">(</span><span class="n">x</span> <span class="o">=</span> <span class="n">tod_bins</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">n_checklists</span><span class="p">))</span> <span class="o">+</span>
+    <span class="nf">geom_col</span><span class="p">(</span><span class="n">mapping</span> <span class="o">=</span> <span class="nf">aes</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">tod_bins</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">n_checklists</span><span class="p">,</span> <span class="n">fill</span> <span class="o">=</span> <span class="s">&#34;#b2bcc5&#34;</span><span class="p">))</span> <span class="o">+</span>
+    <span class="nf">geom_col</span><span class="p">(</span><span class="n">mapping</span> <span class="o">=</span> <span class="nf">aes</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">tod_bins</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">n_detected</span><span class="p">,</span> <span class="n">fill</span> <span class="o">=</span> <span class="s">&#34;#517fa8&#34;</span><span class="p">))</span> <span class="o">+</span>
+    <span class="nf">geom_text</span><span class="p">(</span><span class="n">mapping</span> <span class="o">=</span> <span class="nf">aes</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">tod_bins</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">n_detected</span> <span class="o">+</span> <span class="m">7000</span><span class="p">,</span> <span class="n">label</span> <span class="o">=</span> <span class="nf">paste</span><span class="p">(</span><span class="nf">as.character</span><span class="p">(</span><span class="n">det_freq</span><span class="p">),</span><span class="s">&#34;%&#34;</span><span class="p">,</span> <span class="n">sep</span> <span class="o">=</span> <span class="s">&#34;&#34;</span><span class="p">)),</span> <span class="n">colour</span> <span class="o">=</span> <span class="s">&#34;#878787&#34;</span><span class="p">,</span> <span class="n">angle</span> <span class="o">=</span> <span class="m">290</span><span class="p">)</span> <span class="o">+</span> 
+    <span class="nf">scale_fill_identity</span><span class="p">(</span><span class="n">name</span> <span class="o">=</span> <span class="s">&#34;Nuthatch Observed&#34;</span><span class="p">,</span>
+                        <span class="n">labels</span> <span class="o">=</span> <span class="nf">c</span><span class="p">(</span><span class="s">&#34;Yes&#34;</span><span class="p">,</span> <span class="s">&#34;No&#34;</span><span class="p">),</span>
+                        <span class="n">guide</span> <span class="o">=</span> <span class="s">&#34;legend&#34;</span><span class="p">)</span> <span class="o">+</span> 
+    <span class="nf">labs</span><span class="p">(</span><span class="n">title</span> <span class="o">=</span> <span class="s">&#34;eBird Checklists With White-Breasted Nuthatch Sightings By Checklist Start Time&#34;</span><span class="p">,</span> 
+         <span class="n">subtitle</span> <span class="o">=</span> <span class="s">&#34;Minnesota 2010-2021&#34;</span><span class="p">,</span>
+         <span class="n">y</span> <span class="o">=</span> <span class="s">&#34;Total Number of Checklists&#34;</span><span class="p">,</span>
+         <span class="n">x</span> <span class="o">=</span> <span class="s">&#34;Hours since midnight&#34;</span><span class="p">,)</span> <span class="o">+</span> 
+    <span class="nf">theme_bw</span><span class="p">()</span> <span class="o">+</span> 
+    <span class="nf">theme</span><span class="p">(</span><span class="n">legend.position</span> <span class="o">=</span> <span class="nf">c</span><span class="p">(</span><span class="m">0.85</span><span class="p">,</span> <span class="m">0.85</span><span class="p">),</span>
+        <span class="n">legend.background</span> <span class="o">=</span> <span class="nf">element_blank</span><span class="p">(),</span>
+        <span class="n">panel.grid.minor</span> <span class="o">=</span> <span class="nf">element_blank</span><span class="p">(),</span>
+        <span class="n">panel.grid.major.x</span> <span class="o">=</span> <span class="nf">element_blank</span><span class="p">())</span> <span class="o">+</span> 
+    <span class="nf">scale_x_continuous</span><span class="p">(</span><span class="n">breaks</span> <span class="o">=</span> <span class="nf">seq</span><span class="p">(</span><span class="m">0</span><span class="p">,</span> <span class="m">24</span><span class="p">,</span> <span class="n">by</span> <span class="o">=</span> <span class="m">3</span><span class="p">),</span> <span class="n">limits</span> <span class="o">=</span> <span class="nf">c</span><span class="p">(</span><span class="m">0</span><span class="p">,</span> <span class="m">24</span><span class="p">))</span> <span class="o">+</span>
+    <span class="nf">scale_y_continuous</span><span class="p">(</span><span class="n">labels</span> <span class="o">=</span> <span class="n">scales</span><span class="o">::</span><span class="n">comma</span><span class="p">)</span>
+</code></pre></div><p><img src="/static/figs/ebird-explore/sightings-by-time.png" alt="Figure 2: Sightings by Time" title="Table of Sightings"></p>
+<p>As was anticipated - most of the checklists are in the morning with a
+co-observed increase in the detection frequency of the white breasted
+nuthatch.</p>
+<hr>
+<h3 id="mapping-checklists-and-sightings">Mapping Checklists and Sightings</h3>
+<p>We can also plot the sightings on a map - since each checklist is
+associated with a latitude and longitude. I was almost able to use the
+script provided in eBird Best Practices, but instead of acquiring BCR
+data, I downloaded a shape file from the State of Minnesota to use. That
+data is loaded here.</p>
+<div class="highlight"><pre class="chroma"><code class="language-r" data-lang="r"><span class="n">map_proj</span> <span class="o">&lt;-</span> <span class="nf">st_crs</span><span class="p">(</span><span class="s">&#34;ESRI:102003&#34;</span><span class="p">)</span>
+<span class="n">ne_land</span> <span class="o">&lt;-</span> <span class="nf">read_sf</span><span class="p">(</span><span class="s">&#34;data/gis-data.gpkg&#34;</span><span class="p">,</span> <span class="s">&#34;ne_land&#34;</span><span class="p">)</span> <span class="o">%&gt;%</span> 
+  <span class="nf">st_transform</span><span class="p">(</span><span class="n">crs</span> <span class="o">=</span> <span class="n">map_proj</span><span class="p">)</span> <span class="o">%&gt;%</span> 
+  <span class="nf">st_geometry</span><span class="p">()</span>
+
+<span class="n">mn</span> <span class="o">&lt;-</span> <span class="nf">read_sf</span><span class="p">(</span><span class="nf">here</span><span class="p">(</span><span class="s">&#34;data&#34;</span><span class="p">,</span> <span class="s">&#34;gis-data.gpkg&#34;</span><span class="p">),</span> <span class="s">&#34;mn&#34;</span><span class="p">)</span> <span class="o">%&gt;%</span>
+  <span class="nf">st_transform</span><span class="p">(</span><span class="n">crs</span> <span class="o">=</span> <span class="n">map_proj</span><span class="p">)</span> <span class="o">%&gt;%</span>
+  <span class="nf">st_geometry</span><span class="p">()</span>
+
+<span class="n">ne_country_lines</span> <span class="o">&lt;-</span> <span class="nf">read_sf</span><span class="p">(</span><span class="s">&#34;data/gis-data.gpkg&#34;</span><span class="p">,</span> <span class="s">&#34;ne_country_lines&#34;</span><span class="p">)</span> <span class="o">%&gt;%</span> 
+  <span class="nf">st_transform</span><span class="p">(</span><span class="n">crs</span> <span class="o">=</span> <span class="n">map_proj</span><span class="p">)</span> <span class="o">%&gt;%</span> 
+  <span class="nf">st_geometry</span><span class="p">()</span>
+<span class="n">ne_state_lines</span> <span class="o">&lt;-</span> <span class="nf">read_sf</span><span class="p">(</span><span class="s">&#34;data/gis-data.gpkg&#34;</span><span class="p">,</span> <span class="s">&#34;ne_state_lines&#34;</span><span class="p">)</span> <span class="o">%&gt;%</span> 
+  <span class="nf">st_transform</span><span class="p">(</span><span class="n">crs</span> <span class="o">=</span> <span class="n">map_proj</span><span class="p">)</span> <span class="o">%&gt;%</span> 
+  <span class="nf">st_geometry</span><span class="p">()</span>
+</code></pre></div><p>I also had the goal of using ggplot for all of the figures in this - the
+eBird Best Practices uses plot() and par() for a lot of the maps. The
+biggest hurdle was setting the field of view. I found and incorporated
+some of the code from the very helpful blog post
+<a href="https://datascience.blog.wzb.eu/2019/04/30/zooming-in-on-maps-with-sf-and-ggplot2/">Here</a>.</p>
+<div class="highlight"><pre class="chroma"><code class="language-r" data-lang="r"><span class="n">get_display_window</span> <span class="o">&lt;-</span> <span class="nf">function</span><span class="p">(</span><span class="n">lat</span><span class="p">,</span> <span class="n">long</span><span class="p">,</span> <span class="n">zoom</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">zoom_to</span> <span class="o">&lt;-</span> <span class="nf">c</span><span class="p">(</span><span class="n">lat</span><span class="p">,</span> <span class="n">long</span><span class="p">)</span>
+  <span class="n">zoom_level</span> <span class="o">&lt;-</span> <span class="m">5</span>
+  
+  <span class="c1"># Lambert azimuthal equal-area projection around center of interest</span>
+  <span class="n">target_crs</span> <span class="o">&lt;-</span> <span class="nf">sprintf</span><span class="p">(</span><span class="s">&#39;+proj=laea +lon_0=%f +lat_0=%f&#39;</span><span class="p">,</span>
+                        <span class="n">zoom_to[1]</span><span class="p">,</span> <span class="n">zoom_to[2]</span><span class="p">)</span>
+  
+  <span class="n">C</span> <span class="o">&lt;-</span> <span class="m">40075016.686</span>   <span class="c1"># ~ circumference of Earth in meters</span>
+  <span class="n">x_span</span> <span class="o">&lt;-</span> <span class="n">C</span> <span class="o">/</span> <span class="m">2</span><span class="nf">^</span><span class="p">(</span><span class="n">zoom_level</span><span class="m">+0.5</span><span class="p">)</span>
+  <span class="n">y_span</span> <span class="o">&lt;-</span> <span class="n">C</span> <span class="o">/</span> <span class="m">2</span><span class="nf">^</span><span class="p">(</span><span class="n">zoom_level</span><span class="m">+0.95</span><span class="p">)</span>
+  
+  <span class="n">zoom_to_xy</span> <span class="o">&lt;-</span> <span class="nf">st_transform</span><span class="p">(</span><span class="nf">st_sfc</span><span class="p">(</span><span class="nf">st_point</span><span class="p">(</span><span class="n">zoom_to</span><span class="p">),</span> <span class="n">crs</span> <span class="o">=</span> <span class="m">4326</span><span class="p">),</span>
+                             <span class="n">crs</span> <span class="o">=</span> <span class="n">target_crs</span><span class="p">)</span>
+  
+  <span class="n">disp_window</span> <span class="o">&lt;-</span> <span class="nf">st_sfc</span><span class="p">(</span>
+      <span class="nf">st_point</span><span class="p">(</span><span class="nf">st_coordinates</span><span class="p">(</span><span class="n">zoom_to_xy</span> <span class="o">-</span> <span class="nf">c</span><span class="p">(</span><span class="n">x_span</span> <span class="o">/</span> <span class="m">2</span><span class="p">,</span> <span class="n">y_span</span> <span class="o">/</span> <span class="m">2</span><span class="p">))),</span>
+      <span class="nf">st_point</span><span class="p">(</span><span class="nf">st_coordinates</span><span class="p">(</span><span class="n">zoom_to_xy</span> <span class="o">+</span> <span class="nf">c</span><span class="p">(</span><span class="n">x_span</span> <span class="o">/</span> <span class="m">2</span><span class="p">,</span> <span class="n">y_span</span> <span class="o">/</span> <span class="m">2</span><span class="p">))),</span>
+      <span class="n">crs</span> <span class="o">=</span> <span class="n">target_crs</span>
+  <span class="p">)</span>
+  <span class="n">window_crs</span> <span class="o">&lt;-</span> <span class="nf">list</span><span class="p">(</span><span class="n">window</span> <span class="o">=</span> <span class="n">disp_window</span><span class="p">,</span> <span class="n">crs</span> <span class="o">=</span> <span class="n">target_crs</span><span class="p">)</span>
+  <span class="nf">return</span><span class="p">(</span><span class="n">window_crs</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="n">window_crs</span> <span class="o">&lt;-</span> <span class="nf">get_display_window</span><span class="p">(</span><span class="m">-94.3114</span><span class="p">,</span> <span class="m">46.278594</span><span class="p">,</span> <span class="m">5</span><span class="p">)</span>
+</code></pre></div><p>And then all that is left is to generate the plot itself:</p>
+<div class="highlight"><pre class="chroma"><code class="language-r" data-lang="r"><span class="n">nuthatch_mn_data</span> <span class="o">%&gt;%</span>
+  <span class="n">dplyr</span><span class="o">::</span><span class="nf">select</span><span class="p">(</span><span class="n">latitude</span><span class="p">,</span> <span class="n">longitude</span><span class="p">,</span> <span class="n">species_observed</span><span class="p">)</span> <span class="o">%&gt;%</span>
+  <span class="nf">st_as_sf</span><span class="p">(</span><span class="n">coords</span> <span class="o">=</span> <span class="nf">c</span><span class="p">(</span><span class="s">&#34;longitude&#34;</span><span class="p">,</span> <span class="s">&#34;latitude&#34;</span><span class="p">),</span> <span class="n">crs</span> <span class="o">=</span> <span class="m">4326</span><span class="p">)</span> <span class="o">%&gt;%</span>
+  <span class="nf">st_transform</span><span class="p">(</span><span class="n">crs</span> <span class="o">=</span> <span class="n">map_proj</span><span class="p">)</span> <span class="o">%&gt;%</span>
+  <span class="nf">ggplot</span><span class="p">(</span><span class="n">data</span> <span class="o">=</span> <span class="n">.)</span> <span class="o">+</span>
+  <span class="nf">geom_sf</span><span class="p">(</span><span class="n">data</span> <span class="o">=</span> <span class="n">ne_land</span><span class="p">,</span> <span class="n">color</span> <span class="o">=</span> <span class="s">&#34;white&#34;</span><span class="p">)</span> <span class="o">+</span> 
+  <span class="nf">geom_sf</span><span class="p">(</span><span class="n">data</span> <span class="o">=</span> <span class="n">ne_country_lines</span><span class="p">,</span> <span class="n">color</span> <span class="o">=</span> <span class="s">&#34;white&#34;</span><span class="p">)</span> <span class="o">+</span> 
+  <span class="nf">geom_sf</span><span class="p">(</span><span class="n">data</span> <span class="o">=</span> <span class="n">ne_state_lines</span><span class="p">,</span> <span class="n">color</span> <span class="o">=</span> <span class="s">&#34;white&#34;</span><span class="p">)</span> <span class="o">+</span> 
+  <span class="nf">geom_sf</span><span class="p">(</span> <span class="nf">aes</span><span class="p">(</span><span class="n">col</span><span class="o">=</span><span class="n">species_observed</span><span class="p">),</span> <span class="n">alpha</span> <span class="o">=</span> <span class="m">0.01</span><span class="p">,</span> <span class="n">size</span> <span class="o">=</span> <span class="m">0.5</span><span class="p">)</span> <span class="o">+</span>
+  <span class="nf">scale_color_manual</span><span class="p">(</span><span class="n">values</span><span class="o">=</span><span class="nf">c</span><span class="p">(</span><span class="s">&#34;#b2bcc5&#34;</span><span class="p">,</span> <span class="s">&#34;#517fa8&#34;</span><span class="p">))</span> <span class="o">+</span> 
+  <span class="nf">coord_sf</span><span class="p">(</span><span class="n">xlim</span> <span class="o">=</span> <span class="nf">st_coordinates</span><span class="p">(</span><span class="n">window_crs</span><span class="o">$</span><span class="n">window</span><span class="p">)</span><span class="n">[</span><span class="p">,</span><span class="s">&#39;X&#39;</span><span class="n">]</span><span class="p">,</span>
+           <span class="n">ylim</span> <span class="o">=</span> <span class="nf">st_coordinates</span><span class="p">(</span><span class="n">window_crs</span><span class="o">$</span><span class="n">window</span><span class="p">)</span><span class="n">[</span><span class="p">,</span><span class="s">&#39;Y&#39;</span><span class="n">]</span><span class="p">,</span>
+           <span class="n">crs</span> <span class="o">=</span> <span class="n">window_crs</span><span class="o">$</span><span class="n">crs</span><span class="p">,</span> <span class="n">datum</span> <span class="o">=</span> <span class="n">window_crs</span><span class="o">$</span><span class="n">crs</span><span class="p">)</span> <span class="o">+</span> 
+  <span class="nf">theme_bw</span><span class="p">()</span> <span class="o">+</span> 
+  <span class="nf">labs</span><span class="p">(</span><span class="n">title</span> <span class="o">=</span> <span class="s">&#34;White-Breasted Nuthatch Sightings&#34;</span><span class="p">,</span> 
+       <span class="n">subtitle</span> <span class="o">=</span> <span class="s">&#34;Minnesota 2010-2021&#34;</span><span class="p">,</span>
+       <span class="n">caption</span> <span class="o">=</span> <span class="s">&#34;Sightings in blue. Non-Sightings in gray.&#34;</span><span class="p">)</span> <span class="o">+</span> 
+  <span class="nf">theme</span><span class="p">(</span><span class="n">panel.background</span> <span class="o">=</span> <span class="nf">element_blank</span><span class="p">(),</span>
+        <span class="n">axis.text</span> <span class="o">=</span> <span class="nf">element_blank</span><span class="p">(),</span>
+        <span class="n">axis.ticks</span> <span class="o">=</span> <span class="nf">element_blank</span><span class="p">(),</span>
+        <span class="n">panel.grid</span> <span class="o">=</span> <span class="nf">element_blank</span><span class="p">(),</span>
+        <span class="n">legend.position</span> <span class="o">=</span> <span class="s">&#34;none&#34;</span>
+        <span class="p">)</span>
+</code></pre></div><p><img src="/static/figs/ebird-explore/sightings-map.png" alt="Figure 3: Map of Sightings" title="Map of Sightings"></p>
+<p>What you should appreciate from this plot is that the majority of bird
+sightings are where people live, for MN this means the Twin Cities,
+Duluth, and Rochester mostly. This should make sense, places close to
+home are the most convenient to go birding at. However, this introduces
+some spatial bias which will have to be corrected for when I model the
+encounter rate later. One thing that would be interesting is to repeat
+this analysis for a rarer bird like the Great Grey Owl which only really
+appears in the far north, where the density of checklists is low.</p>
+<hr>
+<h3 id="final-thoughts">Final Thoughts</h3>
+<p>Of course, this is only the tip of the iceberg of what can be done with
+eBird data. The Best Practices eBook I have been referencing goes on to
+combine this data with land cover data to model encounter rate,
+occupancy, and relative abundance (for the Wood Thrush in the South and
+Southeast) and that is likely what I will do next. All the code from
+this post and the future posts on eBird data can be found on GitHub at
+this <a href="www.github.com">Link</a>. <br></p>
+<p>Note: I grabbed some pixel colors from a picture of the White Breasted
+Nuthatch as the color scheme for the plots in this post.</p>
+</article>
+
+        </main><footer id="footer">
+    copyright © 2022 kellen mulford
+</footer>
+</body>
+</html>

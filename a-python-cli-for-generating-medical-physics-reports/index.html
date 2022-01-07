@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html><head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Portfolio Site">
+    
+    <link rel="shortcut icon" href="https://mulfordkl.github.io/favicon.ico">
+    
+    <link rel="stylesheet" href="/css/style.min.css">
+    <title>a python cli for generating medical physics reports</title>
+</head>
+<body><header id="banner">
+    <h2><a href="https://mulfordkl.github.io">kellen  mulford</a></h2>
+    <nav>
+        <ul>
+            <li>
+                <a href="/" title="posts">projects</a>
+            </li><li>
+                <a href="/tags/" title="tags">tags</a>
+            </li><li>
+                <a href="/about/" title="about">about</a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main id="content">
+<article>
+    <header id="post-header">
+        <h1>a python cli for generating medical physics reports</h1>
+            <div>
+                <time>June 23, 2021</time>
+                </div>
+    </header><h3 id="see-the-code-herehttpsgithubcommulfordklmedphyscli">See the code <a href="https://github.com/mulfordkl/MedPhysCLI">Here</a></h3>
+<p>As part of the funding for my Ph.D. I work as sort of a junior diagnostic medical physicist in the department of Radiology at the University of Minnesota. My job is to perform state and federal physics tests on radiation producing equipment at any of the M Health Fairview sites across central Minnesota. As a trainee, I am not qualified to test CTs and MRIs (the fun ones) so I work on X-Ray rooms, C-Arms, and Bone Density scanners. The surveys are designed to test the radiation output and image quality of the equipment so that radiation is delivered to patients safely and imaging quality remains high.</p>
+<p>As we perform the surveys we enter data given by our radiation detectors into Excel templates that are equipment type, manufacturer, and model specific. For each report I have to fill in a header with information about the equipment, like the <strong>ID</strong> and <strong>Serial Number</strong>, the <strong>Site</strong>, the <strong>Location</strong> within the site, the <strong>Manufacturer</strong>, the <strong>Model</strong>, etc. as well as information about myself and the general circumstances of the survey.</p>
+<p>In addition, I am responsible for the storing, filing, and organization of the completed reports (~400 per year). To increase our ability to find completed reports I instituted a universal naming scheme for the reports which generally follows <strong>&ldquo;IDNumber_Site_EquipmentType_Manufacturer-Model_ReportType_Date&rdquo;</strong>. In practice this meant I was manually renaming the files from my colleagues at the end of each month and taking pains to name my reports correctly as well.</p>
+<p>I was spending a significant chunk of time on naming and filling out the headers of the reports. Simply generating the template and filling out this standard info would take 5-15 minutes per piece of equipment. Who has time for that?</p>
+<p>So I developed a command line interface (CLI) in Python to handle all of this for me. The general command is:</p>
+<pre><code>create_report ID_NUMBER [options]
+</code></pre><p>Where options could be</p>
+<ul>
+<li>&lsquo;&ndash;type&rsquo; Type of Report. The default is Annual but it could also be &ldquo;Other&rdquo; for a tube replacement or &ldquo;Acceptance&rdquo; for a new piece of equipment</li>
+<li>&lsquo;&ndash;date&rsquo; Date. The default is whatever day when the command is invoked but this allows for the pre-generating of reports ahead of time.</li>
+<li>&lsquo;&ndash;mod&rsquo; Modifying text. The default is blank, but sometimes a specific X-Ray tube needs to be noted so whatever is put here is appended to the report filename.</li>
+</ul>
+<p>Python has many good libraries for developing CLIs, including base python. I decided to use <a href="https://click.palletsprojects.com/en/8.0.x/">Click</a> because it seems to be the most popular, and fit my use case nicely. When the command is invoked, the following steps occur:</p>
+<ol>
+<li>Find the equipment based on the ID number in an SQLite database
+<ul>
+<li>If the survey is an acceptance survey, the unit will not exist in the database yet, so the user is prompted for the necessary information.</li>
+</ul>
+</li>
+<li>Determine the template needed given the equipment information found from the ID.
+<ul>
+<li>If the template doesn&rsquo;t exist (I didn&rsquo;t include CT because I don&rsquo;t test them) throw an error and exit.</li>
+</ul>
+</li>
+<li>Find the template and write the template header given the equipment information and user-supplied information from a configuration file.</li>
+<li>Save the template with the completed header to a folder with the form &ldquo;Reports/Year/Month/Report.xlsx&rdquo;, creating any folder that doesn&rsquo;t already exist and utilizing the correct file name structure. Throw a warning if the report already exists and prompt the user to continue or cancel.</li>
+</ol>
+<p>I implemented this with two classes: A unit class that contains and retrieves information about the specific equipment in the invocation, and a report_builder class that has methods for getting information about the specific report, writing information to the template, and saving the report with the proper filename.</p>
+<p>In addition to Click I utilized the SQLite3 library (included in base python) and OpenPyXL to interact with the report template files. This tool has worked really well for me - saving me a ton of time and eliminating some fat-finger mistakes in file naming and header input. There are a few things that would make it even better:</p>
+<ol>
+<li>A tool to rename existing reports to the naming format listed above.</li>
+<li>Currently I store the equipment info in an SQLite database file (not committed to GitHub). Since this information can change over time - it would be ideal to have this information in a web-hosted database, and then to have a script that would update the offline db file used in the app, as most radiology departments I am in I won&rsquo;t be able to be connected to the internet (blasted lead shielding).</li>
+<li>Expanding to the equipment types I don&rsquo;t have in there yet (CT and MRI).</li>
+<li>Implement more rigorous testing procedures.</li>
+</ol>
+<p>The GitHub repo for this project is located <a href="https://github.com/mulfordkl/MedPhysCLI">Here</a></p>
+</article>
+
+        </main><footer id="footer">
+    copyright © 2022 kellen mulford
+</footer>
+</body>
+</html>

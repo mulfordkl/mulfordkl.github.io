@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html><head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Portfolio Site">
+    
+    <link rel="shortcut icon" href="https://mulfordkl.github.io/favicon.ico">
+    
+    <link rel="stylesheet" href="/css/style.min.css">
+    <title>tracking my music tastes with the spotify API</title>
+</head>
+<body><header id="banner">
+    <h2><a href="https://mulfordkl.github.io">kellen  mulford</a></h2>
+    <nav>
+        <ul>
+            <li>
+                <a href="/" title="posts">projects</a>
+            </li><li>
+                <a href="/tags/" title="tags">tags</a>
+            </li><li>
+                <a href="/about/" title="about">about</a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main id="content">
+<article>
+    <header id="post-header">
+        <h1>tracking my music tastes with the spotify API</h1>
+            <div>
+                <time>March 21, 2021</time>
+                </div>
+    </header><h3 id="introduction">Introduction</h3>
+<p>Every year in December Spotify releases a personalized &ldquo;year-in-review&rdquo; that gives each Spotify user a look at what and how much music they listened to over the year. This also comes with a 100 song playlist of your most listened to tracks for the year. Now I recently learned that Spotify keeps features about each track, like &lsquo;acousticness&rsquo; and &lsquo;danceability&rsquo; as well as boring music theory stuff (I jest) like cadence key, and time signature. Presumably they use it for new music recommendations and to prevent large mood swings when shuffling (I&rsquo;m telling you right now it is NOT random). I figured I could learn something about how my music tastes have changed over time from these features and my most played tracks - so I explored how to access my data and the track data with the Spotify API.</p>
+<h3 id="get-that-data">Get that data</h3>
+<p>The API is well documented and can be accessed by anyone for free, but you will need authorization from each user you want to collect data on. This is not a problem for your own data, however! I used the Python library &ldquo;Spotipy&rdquo;, which provides a host of wrapper functions to make authorization and calls to the API straightforward. First I defined a couple of function that will help me down the road:</p>
+<div class="highlight"><pre class="chroma"><code class="language-python" data-lang="python"><span class="kn">import</span> <span class="nn">spotipy</span>
+<span class="kn">import</span> <span class="nn">pprint</span>
+<span class="kn">from</span> <span class="nn">spotipy.oauth2</span> <span class="kn">import</span> <span class="n">SpotifyOAuth</span>
+
+<span class="c1">## Define functions that will help us down the road</span>
+
+<span class="k">def</span> <span class="nf">get_yearly_top_songs_plid</span><span class="p">(</span><span class="n">top_songs_pl</span><span class="p">,</span> <span class="n">playlist</span><span class="p">):</span>
+    <span class="s2">&#34;&#34;&#34;Checks if a playlist name fits the yearly &#39;Top Songs&#39; pattern &#34;&#34;&#34;</span>
+    <span class="n">check_string</span> <span class="o">=</span> <span class="s2">&#34;Your Top Songs&#34;</span>
+    <span class="k">if</span> <span class="n">check_string</span> <span class="ow">in</span> <span class="n">playlist</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]:</span>
+        <span class="n">top_songs_pl</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">playlist</span><span class="p">)</span>
+        <span class="k">print</span><span class="p">(</span><span class="s2">&#34;Found yearly playlist with name: {}&#34;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">playlist</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]))</span>
+
+<span class="k">def</span> <span class="nf">get_track_ids</span><span class="p">(</span><span class="n">playlist_response_object</span><span class="p">):</span>
+    <span class="s2">&#34;&#34;&#34;Gets all the track ids from a playlist&#34;&#34;&#34;</span>
+    <span class="n">track_ids</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">track</span> <span class="ow">in</span> <span class="n">playlist_response_object</span><span class="p">[</span><span class="s2">&#34;tracks&#34;</span><span class="p">]:</span>
+            <span class="n">track_ids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">track</span><span class="p">[</span><span class="s2">&#34;track&#34;</span><span class="p">][</span><span class="s2">&#34;id&#34;</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">track_ids</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="p">(</span><span class="s2">&#34;Something went wrong&#34;</span><span class="p">)</span>
+        
+<span class="k">def</span> <span class="nf">chunks</span><span class="p">(</span><span class="n">lst</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
+    <span class="s2">&#34;&#34;&#34;Yield successive n-sized chunks from list.&#34;&#34;&#34;</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">lst</span><span class="p">),</span> <span class="n">n</span><span class="p">):</span>
+        <span class="k">yield</span> <span class="n">lst</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">i</span> <span class="o">+</span> <span class="n">n</span><span class="p">]</span>
+
+<span class="k">def</span> <span class="nf">get_year_from_playlist_name</span><span class="p">(</span><span class="n">playlist_object</span><span class="p">):</span>
+    <span class="s2">&#34;&#34;&#34;Gets the year from the playlist name&#34;&#34;&#34;</span>
+    <span class="n">year</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s2">&#34;20\d\d&#34;</span><span class="p">,</span> <span class="n">playlist_object</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">])</span>
+    <span class="k">if</span> <span class="n">year</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">year</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+<span class="k">def</span> <span class="nf">get_track_features</span><span class="p">(</span><span class="n">chunked_track_ids</span><span class="p">):</span>
+    <span class="s2">&#34;&#34;&#34;Makes API calls with the track IDs to get info and features&#34;&#34;&#34;</span>
+    <span class="n">track_info</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">track_features</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">chunked_track_ids</span><span class="p">:</span>
+
+        <span class="n">track_info_chunk</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">tracks</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
+        <span class="n">track_features_chunk</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">audio_features</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
+    
+        <span class="n">track_info</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">track_info_chunk</span><span class="p">[</span><span class="s1">&#39;tracks&#39;</span><span class="p">])</span>
+        <span class="n">track_features</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">track_features_chunk</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">track_info</span><span class="p">,</span> <span class="n">track_features</span>
+</code></pre></div><p>The <code>chunks()</code> function is necessary because you can only fetch information from a certain number of songs at a time, and somehow my 2016 top 100 songs has 101 songs?? With those helpers defined, we can connect the app with OAuth and make our API calls. You have to set a scope when you connect, and for this project all I needed was to be able to read from my playlists.</p>
+<div class="highlight"><pre class="chroma"><code class="language-python" data-lang="python"><span class="c1"># Set up our scope and connection.</span>
+<span class="n">scope</span> <span class="o">=</span> <span class="s1">&#39;playlist-read-private&#39;</span>
+
+<span class="n">auth_manager</span> <span class="o">=</span> <span class="n">SpotifyOAuth</span><span class="p">(</span><span class="n">client_id</span> <span class="o">=</span> <span class="s2">&#34;client_id&#34;</span><span class="p">,</span>
+                                        <span class="n">client_secret</span> <span class="o">=</span> <span class="s2">&#34;client_secret&#34;</span><span class="p">,</span>
+                                        <span class="n">redirect_uri</span> <span class="o">=</span> <span class="s1">&#39;App URL&#39;</span><span class="p">,</span>
+                                        <span class="n">scope</span> <span class="o">=</span> <span class="n">scope</span><span class="p">)</span>
+
+<span class="n">sp</span> <span class="o">=</span> <span class="n">spotipy</span><span class="o">.</span><span class="n">Spotify</span><span class="p">(</span><span class="n">auth_manager</span><span class="o">=</span><span class="n">auth_manager</span><span class="p">)</span>
+</code></pre></div><p>With that set up I can start making calls to the API to get information about my playlists, and using my helper function above, to get the track names from each playlist:</p>
+<div class="highlight"><pre class="chroma"><code class="language-python" data-lang="python"><span class="n">playlists</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">current_user_playlists</span><span class="p">(</span><span class="n">limit</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
+<span class="n">top_songs_playlists</span> <span class="o">=</span> <span class="p">[]</span>
+
+<span class="c1">#Loop through the playlists and save the ID of the top songs playlists</span>
+<span class="k">while</span> <span class="n">playlists</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">playlist</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">playlists</span><span class="p">[</span><span class="s1">&#39;items&#39;</span><span class="p">]):</span>
+        <span class="n">get_yearly_top_songs_plid</span><span class="p">(</span><span class="n">top_songs_playlists</span><span class="p">,</span> <span class="n">playlist</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">playlists</span><span class="p">[</span><span class="s1">&#39;next&#39;</span><span class="p">]:</span>
+        <span class="n">playlists</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">next</span><span class="p">(</span><span class="n">playlists</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">playlists</span> <span class="o">=</span> <span class="bp">None</span>
+
+<span class="c1">#Get the total number of years for which I have a top songs playlist</span>
+<span class="n">num_years</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">top_songs_playlists</span><span class="p">)</span>
+
+<span class="c1">#Loop through the top songs playlist and get the tracks - added to a dictionary</span>
+<span class="k">for</span> <span class="n">year</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_years</span><span class="p">):</span>
+    <span class="k">print</span><span class="p">(</span><span class="s2">&#34;Finding tracks from {}&#34;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">top_songs_playlists</span><span class="p">[</span><span class="n">year</span><span class="p">][</span><span class="s1">&#39;name&#39;</span><span class="p">]))</span>
+    <span class="n">pl_id</span> <span class="o">=</span> <span class="n">top_songs_playlists</span><span class="p">[</span><span class="n">year</span><span class="p">][</span><span class="s2">&#34;uri&#34;</span><span class="p">]</span>
+    <span class="n">offset</span> <span class="o">=</span> <span class="mi">0</span> 
+    <span class="n">year_tracks</span> <span class="o">=</span> <span class="p">[]</span>   
+    <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">playlist_items</span><span class="p">(</span><span class="n">pl_id</span><span class="p">,</span>
+                                     <span class="n">offset</span><span class="o">=</span><span class="n">offset</span><span class="p">,</span>
+                                     <span class="n">fields</span><span class="o">=</span><span class="s1">&#39;items.track.id,total&#39;</span><span class="p">,</span>
+                                     <span class="n">additional_types</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;track&#39;</span><span class="p">])</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">response</span><span class="p">[</span><span class="s1">&#39;items&#39;</span><span class="p">])</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">break</span>
+        <span class="n">num_tracks</span> <span class="o">=</span> <span class="n">response</span><span class="p">[</span><span class="s1">&#39;total&#39;</span><span class="p">]</span>
+        <span class="n">year_tracks</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">response</span><span class="p">[</span><span class="s1">&#39;items&#39;</span><span class="p">])</span>
+        <span class="n">offset</span> <span class="o">=</span> <span class="n">offset</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">response</span><span class="p">[</span><span class="s1">&#39;items&#39;</span><span class="p">])</span>
+    <span class="k">print</span><span class="p">(</span><span class="s2">&#34;Found {} tracks&#34;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">num_tracks</span><span class="p">))</span>
+    <span class="n">top_songs_playlists</span><span class="p">[</span><span class="n">year</span><span class="p">][</span><span class="s2">&#34;tracks&#34;</span><span class="p">]</span> <span class="o">=</span> <span class="n">year_tracks</span>
+</code></pre></div><p>With my dictionary of years:songs I can now loop through all the tracks and get the song info and the features.</p>
+<div class="highlight"><pre class="chroma"><code class="language-python" data-lang="python"><span class="n">track_info</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">track_features</span> <span class="o">=</span> <span class="p">[]</span>
+
+<span class="k">for</span> <span class="n">playlist</span> <span class="ow">in</span> <span class="n">top_songs_playlists</span><span class="p">:</span>
+    <span class="k">print</span><span class="p">(</span><span class="s2">&#34;Getting features for {}&#34;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">playlist</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]))</span>
+    <span class="n">year</span> <span class="o">=</span> <span class="n">get_year_from_playlist_name</span><span class="p">(</span><span class="n">playlist</span><span class="p">)</span>
+    <span class="k">print</span><span class="p">(</span><span class="n">year</span><span class="p">)</span>
+    <span class="c1">#helper function to get track ids from a playlist object</span>
+    <span class="n">track_ids</span> <span class="o">=</span> <span class="n">get_track_ids</span><span class="p">(</span><span class="n">playlist</span><span class="p">)</span>
+
+    <span class="k">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">track_ids</span><span class="p">))</span>
+
+    <span class="c1">#chunkify to not overload the API</span>
+    <span class="n">track_ids_chunks</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">chunks</span><span class="p">(</span><span class="n">track_ids</span><span class="p">,</span> <span class="mi">50</span><span class="p">))</span>
+
+    <span class="c1">#This function calls the API to get the track features and information</span>
+    <span class="n">year_tracks_info</span><span class="p">,</span> <span class="n">year_tracks_features</span> <span class="o">=</span> <span class="n">get_track_features</span><span class="p">(</span><span class="n">track_ids_chunks</span><span class="p">)</span>
+    
+    <span class="c1">#Add the year it was in my top songs to each track instance</span>
+    <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">year_tracks_features</span><span class="p">:</span>
+        <span class="n">item</span><span class="o">.</span><span class="n">update</span><span class="p">(</span> <span class="p">{</span><span class="s2">&#34;year&#34;</span><span class="p">:</span> <span class="n">year</span><span class="p">})</span>
+    <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">year_tracks_info</span><span class="p">:</span>
+        <span class="n">item</span><span class="o">.</span><span class="n">update</span><span class="p">(</span> <span class="p">{</span><span class="s2">&#34;year&#34;</span><span class="p">:</span> <span class="n">year</span><span class="p">})</span>
+    <span class="c1">#Add the track info and features from the specific year to the whole dataset</span>
+    <span class="n">track_info</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">year_tracks_info</span><span class="p">)</span>
+    <span class="n">track_features</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">year_tracks_features</span><span class="p">)</span>
+</code></pre></div><p>Now all I did was do a left join of <code>track_info</code> and <code>track_features</code> and save it for use in R.</p>
+<hr>
+<h3 id="analysis">Analysis</h3>
+<div class="highlight">
+</div>
+<p>The first thing I am interested in is how the average features over the playlist change through the years. To do this I used the <code>group_by()</code> function to group the features by year and then <code>summarise()</code> in conjunction with <a href="https://rdrr.io/r/base/mean.html"><code>mean()</code></a> to get a dataframe of the mean audio feature per year. The plot of the features over time is below:</p>
+<div class="highlight">
+<p><img src="/static/figs/spotify-analysis/features-by-year.png" width="700px" style="display: block; margin: auto;" /></p>
+</div>
+<p>As it appears, I am becoming more boring. The mean energy of my top tracks, as well as the mean dancebility, is decreasing. On the other hand, the mean acousticness and instrumentalness is increasing. Have I started listening to more classical music? I manually coded whether a track was classical or not - but you may be able to pull it from the artist. In Spotify, genre is stored in the artists pbject, not in the song or album information. Keeping in mind that 2016 has 101 songs somehow, here is the proportion of classical music over time:</p>
+<div class="highlight">
+<p><img src="/static/figs/spotify-analysis/classical-by-year.png" width="700px" style="display: block; margin: auto;" /></p>
+</div>
+<p>The answer is yes - I have been listening to more classical music since 2016. But that doesn&rsquo;t tell the whole story. Classical music tracks are, on average, longer than non-classical tracks. So while the genre classical represents about a third of my top tracks each year, the proportion of time spent listening to classical music is larger than that.</p>
+<p>Lastly I&rsquo;ll take a peek at the distribution of the popularity metric among my top songs from 2016 to 2020. The popularity is a metric from 0 (20th Century French Organ Music) to 100 (Ariana Grande), so we can see how obscure my music tastes are.</p>
+<div class="highlight">
+<table>
+<thead>
+<tr>
+<th style="text-align:right">Track Name</th>
+<th style="text-align:center">Artist</th>
+<th style="text-align:center">Album Name</th>
+<th style="text-align:center">Popularity</th>
+<th style="text-align:center">Year</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right">Dreams - 2004 Remaster</td>
+<td style="text-align:center">[&lsquo;Fleetwood Mac&rsquo;]</td>
+<td style="text-align:center">Rumours (Super Deluxe)</td>
+<td style="text-align:center">85</td>
+<td style="text-align:center">2020</td>
+</tr>
+<tr>
+<td style="text-align:right">Dreams - 2004 Remaster</td>
+<td style="text-align:center">[&lsquo;Fleetwood Mac&rsquo;]</td>
+<td style="text-align:center">Rumours (Super Deluxe)</td>
+<td style="text-align:center">85</td>
+<td style="text-align:center">2019</td>
+</tr>
+<tr>
+<td style="text-align:right">Resonance</td>
+<td style="text-align:center">[&lsquo;Home&rsquo;]</td>
+<td style="text-align:center">Odyssey</td>
+<td style="text-align:center">69</td>
+<td style="text-align:center">2018</td>
+</tr>
+<tr>
+<td style="text-align:right">Passionfruit</td>
+<td style="text-align:center">[&lsquo;Drake&rsquo;]</td>
+<td style="text-align:center">More Life</td>
+<td style="text-align:center">78</td>
+<td style="text-align:center">2017</td>
+</tr>
+<tr>
+<td style="text-align:right">Africa</td>
+<td style="text-align:center">[&lsquo;TOTO&rsquo;]</td>
+<td style="text-align:center">Toto IV</td>
+<td style="text-align:center">81</td>
+<td style="text-align:center">2016</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="highlight">
+<p><img src="/static/figs/spotify-analysis/popularity-by-year.png" width="700px" style="display: block; margin: auto;" /></p>
+</div>
+<p>My most popular songs are from Fleetwood Mac and Drake - but on the whole my music tastes are not very popular, which I blame on Jean Langlais.</p>
+<h3 id="conclusion">Conclusion</h3>
+<p>There are plenty of more questions I could ask of my data, such as:</p>
+<ol>
+<li>
+<p>Is my top 20 songs playlist, which I curated to be representative of my tastes, actually representative of my tastes? Or, what tracks, described by their feature vector, are contained in the hyperplane defined by the tracks in the top 20 songs playlist. I think this could be visualized with PCA. On the other hand, these songs don&rsquo;t likely represent extrema, and may capture a certain proportion of the center, should the features be normally distributed.</p>
+</li>
+<li>
+<p>How much of my top songs stay the same from year to year?</p>
+</li>
+<li>
+<p>How have my music tastes by decade changed over time? If the proportion of classical music is any indication, the decades from 1900-1940 should be on the up.</p>
+</li>
+</ol>
+<p>And so on. Feel free to reach out if you have any questions about how I accessed the data or for any other reason. Thanks!</p>
+</article>
+
+        </main><footer id="footer">
+    copyright © 2022 kellen mulford
+</footer>
+</body>
+</html>
