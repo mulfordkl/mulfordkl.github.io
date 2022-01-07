@@ -2,90 +2,90 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
-    <loc>https://mulfordkl.github.io/categories/c.birds/</loc>
+    <loc>/categories/c.birds/</loc>
     <lastmod>2022-01-07T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>https://mulfordkl.github.io/categories/</loc>
+    <loc>/categories/</loc>
     <lastmod>2022-01-07T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>https://mulfordkl.github.io/tags/ebird/</loc>
+    <loc>/tags/ebird/</loc>
     <lastmod>2022-01-07T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>https://mulfordkl.github.io/</loc>
+    <loc>/</loc>
     <lastmod>2022-01-07T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>https://mulfordkl.github.io/tags/machine-learning/</loc>
+    <loc>/tags/machine-learning/</loc>
     <lastmod>2022-01-07T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>https://mulfordkl.github.io/modeling-encounter-rate-with-ebird-data/</loc>
+    <loc>/posts/ebird-encounter/</loc>
     <lastmod>2022-01-07T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>https://mulfordkl.github.io/posts/</loc>
+    <loc>/posts/</loc>
     <lastmod>2022-01-07T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>https://mulfordkl.github.io/tags/r/</loc>
+    <loc>/tags/r/</loc>
     <lastmod>2022-01-07T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>https://mulfordkl.github.io/tags/spatial/</loc>
+    <loc>/tags/spatial/</loc>
     <lastmod>2022-01-07T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>https://mulfordkl.github.io/tags/</loc>
+    <loc>/tags/</loc>
     <lastmod>2022-01-07T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>https://mulfordkl.github.io/tags/python/</loc>
+    <loc>/tags/python/</loc>
     <lastmod>2022-01-04T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>https://mulfordkl.github.io/solving-wordle-puzzles-with-python/</loc>
+    <loc>/posts/wordle-solver/</loc>
     <lastmod>2022-01-04T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>https://mulfordkl.github.io/categories/z.for-fun/</loc>
+    <loc>/categories/z.for-fun/</loc>
     <lastmod>2022-01-04T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>https://mulfordkl.github.io/acquiring-and-exploring-ebird-data/</loc>
+    <loc>/posts/ebird-explore/</loc>
     <lastmod>2021-12-02T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>https://mulfordkl.github.io/a-full-stack-app-for-ice-cream-reviews/</loc>
+    <loc>/posts/icecream-mn/</loc>
     <lastmod>2021-08-10T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>https://mulfordkl.github.io/categories/b.software/</loc>
+    <loc>/categories/b.software/</loc>
     <lastmod>2021-08-10T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>https://mulfordkl.github.io/tags/mongodb/</loc>
+    <loc>/tags/mongodb/</loc>
     <lastmod>2021-08-10T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>https://mulfordkl.github.io/tags/node.js/</loc>
+    <loc>/tags/node.js/</loc>
     <lastmod>2021-08-10T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>https://mulfordkl.github.io/tags/web-development/</loc>
+    <loc>/tags/web-development/</loc>
     <lastmod>2021-08-10T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>https://mulfordkl.github.io/a-python-cli-for-generating-medical-physics-reports/</loc>
+    <loc>/posts/medphys-cli/</loc>
     <lastmod>2021-06-23T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>https://mulfordkl.github.io/a-shiny-app-to-visualize-radiologist-agreement-data/</loc>
+    <loc>/posts/nvc-shiny/</loc>
     <lastmod>2021-06-21T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>https://mulfordkl.github.io/categories/a.data-science/</loc>
+    <loc>/categories/a.data-science/</loc>
     <lastmod>2021-06-21T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>https://mulfordkl.github.io/tags/shiny/</loc>
+    <loc>/tags/shiny/</loc>
     <lastmod>2021-06-21T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>https://mulfordkl.github.io/predicting-recurrence-in-patients-with-brain-metastases/</loc>
+    <loc>/posts/ctro-cavity/</loc>
     <lastmod>2021-05-10T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>https://mulfordkl.github.io/tags/publication/</loc>
+    <loc>/tags/publication/</loc>
     <lastmod>2021-05-10T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>https://mulfordkl.github.io/tags/radiomics/</loc>
+    <loc>/tags/radiomics/</loc>
     <lastmod>2021-05-10T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>https://mulfordkl.github.io/2021-umn-interdisciplinary-health-data-competition/</loc>
+    <loc>/posts/ihdc-2021/</loc>
     <lastmod>2021-04-15T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>https://mulfordkl.github.io/tracking-my-music-tastes-with-the-spotify-api/</loc>
+    <loc>/posts/spotify-analysis/</loc>
     <lastmod>2021-03-21T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>https://mulfordkl.github.io/about/</loc>
+    <loc>/about/</loc>
   </url>
 </urlset>

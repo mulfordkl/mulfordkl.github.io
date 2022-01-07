@@ -2,22 +2,22 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>R on kellen  mulford</title>
-    <link>https://mulfordkl.github.io/tags/r/</link>
+    <link>/tags/r/</link>
     <description>Recent content in R on kellen  mulford</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-US</language>
     <lastBuildDate>Fri, 07 Jan 2022 00:00:00 +0000</lastBuildDate>
     
-	<atom:link href="https://mulfordkl.github.io/tags/r/index.xml" rel="self" type="application/rss+xml" />
+	<atom:link href="/tags/r/index.xml" rel="self" type="application/rss+xml" />
     
     
     
     <item>
       <title>modeling encounter rate with eBird data</title>
-      <link>https://mulfordkl.github.io/modeling-encounter-rate-with-ebird-data/</link>
+      <link>/posts/ebird-encounter/</link>
       <pubDate>Fri, 07 Jan 2022 00:00:00 +0000</pubDate>
       
-      <guid>https://mulfordkl.github.io/modeling-encounter-rate-with-ebird-data/</guid>
+      <guid>/posts/ebird-encounter/</guid>
       <description>&lt;p&gt;In the last post about eBird data I went through how I acquired,
 cleaned, and explored the dataset. In this project, I am exploring how
 the eBird data can be used to model the encounter rate of the White
@@ -247,7 +247,7 @@ random forest to the observed encounter labels.&lt;/p&gt;
         &lt;span class=&#34;n&#34;&gt;y&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;s&#34;&gt;&amp;#34;Observed Encounter Rate&amp;#34;&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt;
         &lt;span class=&#34;n&#34;&gt;title&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;s&#34;&gt;&amp;#34;Calibration Curve&amp;#34;&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;)&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;+&lt;/span&gt;
     &lt;span class=&#34;nf&#34;&gt;theme_bw&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;()&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;&lt;img src=&#34;https://mulfordkl.github.io/static/figs/ebird-encounter/calibration-model.png&#34; alt=&#34;Figure 1: Calibration Plot&#34; title=&#34;Calibration plot&#34;&gt;&lt;/p&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;&lt;img src=&#34;/static/figs/ebird-encounter/calibration-model.png&#34; alt=&#34;Figure 1: Calibration Plot&#34; title=&#34;Calibration plot&#34;&gt;&lt;/p&gt;
 &lt;p&gt;What I can see here is that our model consistently overestimates the
 encounter rate. At an estimated encounter rate of 0.5 the observed rate
 is only half that. The model does a better job near the upper limit of
@@ -334,7 +334,7 @@ their variance. This plot is shown here:&lt;/p&gt;
     &lt;span class=&#34;nf&#34;&gt;theme_bw&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;()&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;+&lt;/span&gt; 
     &lt;span class=&#34;nf&#34;&gt;labs&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;title&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;s&#34;&gt;&amp;#34;Random Forest Variable Importance&amp;#34;&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;)&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;+&lt;/span&gt;
     &lt;span class=&#34;nf&#34;&gt;ylab&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;s&#34;&gt;&amp;#34;Importance&amp;#34;&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;)&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;&lt;img src=&#34;https://mulfordkl.github.io/static/figs/ebird-encounter/vip.png&#34; alt=&#34;Figure 2: Variable Importance&#34; title=&#34;VIP Plot&#34;&gt;&lt;/p&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;&lt;img src=&#34;/static/figs/ebird-encounter/vip.png&#34; alt=&#34;Figure 2: Variable Importance&#34; title=&#34;VIP Plot&#34;&gt;&lt;/p&gt;
 &lt;p&gt;The two most important variables (by this metric) are the two elevation
 variables. This may make some sense - as nuthatches are less common in
 the prairies and croplands in the Western part of Minnesota. Going even
@@ -372,7 +372,7 @@ tool for checking assumptions about a variable.&lt;/p&gt;
 &lt;span class=&#34;n&#34;&gt;combined_pdp&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;+&lt;/span&gt; &lt;span class=&#34;nf&#34;&gt;plot_annotation&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;
   &lt;span class=&#34;n&#34;&gt;title&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;s&#34;&gt;&amp;#39;Partial Dependence Plots&amp;#39;&lt;/span&gt;
 &lt;span class=&#34;p&#34;&gt;)&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;&lt;img src=&#34;https://mulfordkl.github.io/static/figs/ebird-encounter/pdp.png&#34; alt=&#34;Figure 3: Partial Dependence Plot&#34; title=&#34;PDP Plot&#34;&gt;&lt;/p&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;&lt;img src=&#34;/static/figs/ebird-encounter/pdp.png&#34; alt=&#34;Figure 3: Partial Dependence Plot&#34; title=&#34;PDP Plot&#34;&gt;&lt;/p&gt;
 &lt;p&gt;There are a few interesting trends here: + The model predicts a higher
 encounter rate when the elevation is higher, and when the standard
 deviation of the elevation in a near a checklist is higher. + The
@@ -476,7 +476,7 @@ ebird post.&lt;/p&gt;
           &lt;span class=&#34;n&#34;&gt;panel.grid&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;nf&#34;&gt;element_blank&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;(),&lt;/span&gt;
           &lt;span class=&#34;n&#34;&gt;axis.title&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;nf&#34;&gt;element_blank&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;()&lt;/span&gt;
           &lt;span class=&#34;p&#34;&gt;)&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;&lt;img src=&#34;https://mulfordkl.github.io/static/figs/ebird-encounter/map.png&#34; alt=&#34;Figure 4: Encounter Rate Map&#34; title=&#34;Encounter Rate Map&#34;&gt;&lt;/p&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;&lt;img src=&#34;/static/figs/ebird-encounter/map.png&#34; alt=&#34;Figure 4: Encounter Rate Map&#34; title=&#34;Encounter Rate Map&#34;&gt;&lt;/p&gt;
 &lt;p&gt;We observe a low predicted encounter rate in the western croplands. The
 the bulk of the region with high predicted encounter rates corresponds
 to &lt;a href=&#34;https://nabci-us.org/resources/bird-conservation-regions-map/&#34;&gt;bird conservation region
@@ -485,7 +485,7 @@ to &lt;a href=&#34;https://nabci-us.org/resources/bird-conservation-regions-map/
 &lt;a href=&#34;https://umgljv.org/planning/state-by-bcr-plans/&#34;&gt;https://umgljv.org/planning/state-by-bcr-plans/&lt;/a&gt;.&lt;/p&gt;
 &lt;center&gt;
 &lt;figure&gt;
-&lt;img src=&#34;https://mulfordkl.github.io/static/figs/ebird-encounter/BCRs-720.png&#34; style=&#34;width:50.0%&#34; alt=&#34;Upper Midwest BCR regions&#34; /&gt;&lt;figcaption aria-hidden=&#34;true&#34;&gt;Upper Midwest BCR regions&lt;/figcaption&gt;
+&lt;img src=&#34;/static/figs/ebird-encounter/BCRs-720.png&#34; style=&#34;width:50.0%&#34; alt=&#34;Upper Midwest BCR regions&#34; /&gt;&lt;figcaption aria-hidden=&#34;true&#34;&gt;Upper Midwest BCR regions&lt;/figcaption&gt;
 &lt;/figure&gt;
 &lt;/center&gt;
 &lt;h3 id=&#34;final-thoughts&#34;&gt;Final thoughts&lt;/h3&gt;
@@ -502,10 +502,10 @@ published species extent maps.&lt;/p&gt;
     
     <item>
       <title>solving wordle puzzles with python</title>
-      <link>https://mulfordkl.github.io/solving-wordle-puzzles-with-python/</link>
+      <link>/posts/wordle-solver/</link>
       <pubDate>Tue, 04 Jan 2022 00:00:00 +0000</pubDate>
       
-      <guid>https://mulfordkl.github.io/solving-wordle-puzzles-with-python/</guid>
+      <guid>/posts/wordle-solver/</guid>
       <description>&lt;p&gt;&lt;a href=&#34;https://www.powerlanguage.co.uk/wordle/&#34;&gt;Wordle&lt;/a&gt; is a fun little word puzzle that is very similar to the game Mastermind. The player gets 6 guesses to correctly identify a hidden 5 letter word and after each guess is told whether each letter of the guessed word was:&lt;/p&gt;
 &lt;ol&gt;
 &lt;li&gt;The correct letter in the correct location&lt;/li&gt;
@@ -587,10 +587,10 @@ Not Solved:	858	times (8.58%)
     
     <item>
       <title>acquiring and exploring eBird data</title>
-      <link>https://mulfordkl.github.io/acquiring-and-exploring-ebird-data/</link>
+      <link>/posts/ebird-explore/</link>
       <pubDate>Thu, 02 Dec 2021 00:00:00 +0000</pubDate>
       
-      <guid>https://mulfordkl.github.io/acquiring-and-exploring-ebird-data/</guid>
+      <guid>/posts/ebird-explore/</guid>
       <description>&lt;p&gt;I took up birding during a summer I spent at St. Olaf College working in
 a lab that did electrophysiological experiments on the retinas of
 snapping turtles. Hours in a dark room waiting for light-stimuli
@@ -766,7 +766,7 @@ TRUE
 &lt;p&gt;Overall about 3 in 10 checklists include a Nuthatch (when I refer to
 Nuthatch in this post, I always mean the White-Breasted variety). What
 if we also group by month?&lt;/p&gt;
-&lt;p&gt;&lt;img src=&#34;https://mulfordkl.github.io/static/figs/ebird-explore/sightings-by-month.png&#34; alt=&#34;Figure 1: Sightings by Month&#34; title=&#34;Table of Sightings&#34;&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;/static/figs/ebird-explore/sightings-by-month.png&#34; alt=&#34;Figure 1: Sightings by Month&#34; title=&#34;Table of Sightings&#34;&gt;&lt;/p&gt;
 &lt;p&gt;Anecdotally - It is easier to see the White-Breasted Nuthatch when the
 trees have lost their foliage, so I am not surprised that checklists in
 the fall and winter months have the highest percentage of Nuthatch
@@ -808,7 +808,7 @@ was also done in eBird Best Practices.&lt;/p&gt;
         &lt;span class=&#34;n&#34;&gt;panel.grid.major.x&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;nf&#34;&gt;element_blank&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;())&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;+&lt;/span&gt; 
     &lt;span class=&#34;nf&#34;&gt;scale_x_continuous&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;breaks&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;nf&#34;&gt;seq&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;m&#34;&gt;0&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt; &lt;span class=&#34;m&#34;&gt;24&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;by&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;m&#34;&gt;3&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;),&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;limits&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;nf&#34;&gt;c&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;m&#34;&gt;0&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt; &lt;span class=&#34;m&#34;&gt;24&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;))&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;+&lt;/span&gt;
     &lt;span class=&#34;nf&#34;&gt;scale_y_continuous&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;labels&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;scales&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;::&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;comma&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;)&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;&lt;img src=&#34;https://mulfordkl.github.io/static/figs/ebird-explore/sightings-by-time.png&#34; alt=&#34;Figure 2: Sightings by Time&#34; title=&#34;Table of Sightings&#34;&gt;&lt;/p&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;&lt;img src=&#34;/static/figs/ebird-explore/sightings-by-time.png&#34; alt=&#34;Figure 2: Sightings by Time&#34; title=&#34;Table of Sightings&#34;&gt;&lt;/p&gt;
 &lt;p&gt;As was anticipated - most of the checklists are in the morning with a
 co-observed increase in the detection frequency of the white breasted
 nuthatch.&lt;/p&gt;
@@ -888,7 +888,7 @@ some of the code from the very helpful blog post
         &lt;span class=&#34;n&#34;&gt;panel.grid&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;nf&#34;&gt;element_blank&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;(),&lt;/span&gt;
         &lt;span class=&#34;n&#34;&gt;legend.position&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;s&#34;&gt;&amp;#34;none&amp;#34;&lt;/span&gt;
         &lt;span class=&#34;p&#34;&gt;)&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;&lt;img src=&#34;https://mulfordkl.github.io/static/figs/ebird-explore/sightings-map.png&#34; alt=&#34;Figure 3: Map of Sightings&#34; title=&#34;Map of Sightings&#34;&gt;&lt;/p&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;&lt;img src=&#34;/static/figs/ebird-explore/sightings-map.png&#34; alt=&#34;Figure 3: Map of Sightings&#34; title=&#34;Map of Sightings&#34;&gt;&lt;/p&gt;
 &lt;p&gt;What you should appreciate from this plot is that the majority of bird
 sightings are where people live, for MN this means the Twin Cities,
 Duluth, and Rochester mostly. This should make sense, places close to
@@ -915,10 +915,10 @@ Nuthatch as the color scheme for the plots in this post.&lt;/p&gt;
     
     <item>
       <title>a full stack app for ice cream reviews</title>
-      <link>https://mulfordkl.github.io/a-full-stack-app-for-ice-cream-reviews/</link>
+      <link>/posts/icecream-mn/</link>
       <pubDate>Tue, 10 Aug 2021 00:00:00 +0000</pubDate>
       
-      <guid>https://mulfordkl.github.io/a-full-stack-app-for-ice-cream-reviews/</guid>
+      <guid>/posts/icecream-mn/</guid>
       <description>&lt;h3 id=&#34;live-app-linkhttpsicecream-mnherokuappcom&#34;&gt;live app: &lt;a href=&#34;https://icecream-mn.herokuapp.com&#34;&gt;link&lt;/a&gt;&lt;/h3&gt;
 &lt;h3 id=&#34;code-repo-linkhttpsgithubcommulfordklicecream_mn&#34;&gt;code repo: &lt;a href=&#34;https://github.com/mulfordkl/icecream_mn&#34;&gt;Link&lt;/a&gt;&lt;/h3&gt;
 &lt;p&gt;Throughout my graduate degree I have taken advantage of the fact that my tuition is covered by a fellowship as well as the flexibility of my schedule to continue to take classes beyond the requirements of my degree. This past spring I took a course in the computer science department called &amp;ldquo;Internet Programming,&amp;rdquo; which as the name suggests, covers an introduction to web development.&lt;/p&gt;
@@ -1069,10 +1069,10 @@ Nuthatch as the color scheme for the plots in this post.&lt;/p&gt;
     
     <item>
       <title>a python cli for generating medical physics reports</title>
-      <link>https://mulfordkl.github.io/a-python-cli-for-generating-medical-physics-reports/</link>
+      <link>/posts/medphys-cli/</link>
       <pubDate>Wed, 23 Jun 2021 00:00:00 +0000</pubDate>
       
-      <guid>https://mulfordkl.github.io/a-python-cli-for-generating-medical-physics-reports/</guid>
+      <guid>/posts/medphys-cli/</guid>
       <description>&lt;h3 id=&#34;see-the-code-herehttpsgithubcommulfordklmedphyscli&#34;&gt;See the code &lt;a href=&#34;https://github.com/mulfordkl/MedPhysCLI&#34;&gt;Here&lt;/a&gt;&lt;/h3&gt;
 &lt;p&gt;As part of the funding for my Ph.D. I work as sort of a junior diagnostic medical physicist in the department of Radiology at the University of Minnesota. My job is to perform state and federal physics tests on radiation producing equipment at any of the M Health Fairview sites across central Minnesota. As a trainee, I am not qualified to test CTs and MRIs (the fun ones) so I work on X-Ray rooms, C-Arms, and Bone Density scanners. The surveys are designed to test the radiation output and image quality of the equipment so that radiation is delivered to patients safely and imaging quality remains high.&lt;/p&gt;
 &lt;p&gt;As we perform the surveys we enter data given by our radiation detectors into Excel templates that are equipment type, manufacturer, and model specific. For each report I have to fill in a header with information about the equipment, like the &lt;strong&gt;ID&lt;/strong&gt; and &lt;strong&gt;Serial Number&lt;/strong&gt;, the &lt;strong&gt;Site&lt;/strong&gt;, the &lt;strong&gt;Location&lt;/strong&gt; within the site, the &lt;strong&gt;Manufacturer&lt;/strong&gt;, the &lt;strong&gt;Model&lt;/strong&gt;, etc. as well as information about myself and the general circumstances of the survey.&lt;/p&gt;
@@ -1117,10 +1117,10 @@ Nuthatch as the color scheme for the plots in this post.&lt;/p&gt;
     
     <item>
       <title>a shiny app to visualize radiologist agreement data</title>
-      <link>https://mulfordkl.github.io/a-shiny-app-to-visualize-radiologist-agreement-data/</link>
+      <link>/posts/nvc-shiny/</link>
       <pubDate>Mon, 21 Jun 2021 00:00:00 +0000</pubDate>
       
-      <guid>https://mulfordkl.github.io/a-shiny-app-to-visualize-radiologist-agreement-data/</guid>
+      <guid>/posts/nvc-shiny/</guid>
       <description>&lt;h3 id=&#34;see-the-app-here-linkhttpsmulfordklshinyappsionvc_reads&#34;&gt;See the app here: &lt;a href=&#34;https://mulfordkl.shinyapps.io/nvc_reads/&#34;&gt;Link&lt;/a&gt;&lt;/h3&gt;
 &lt;p&gt;One of the research projects I am currently working on is to establish the level of variability in radiologist reads of neurovascular conflict of the trigeminal nerve from skull base MRI. The level of variability in these reads matters because surgeons utilize skull base MRI when deciding which patients with trigeminal neuralgia would be good candidates for a surgical procedure called microvascular decompression, where blood vessels and arachnoid structures are separated from the trigeminal nerve.&lt;/p&gt;
 &lt;p&gt;The first step of this project was to identify skull base MRI of sufficient quality and resolution that capture the course of the trigeminal nerve from the Pons through Meckel&amp;rsquo;s Cave. We did a search of our PACS database for MRI studies with the words &amp;ldquo;trigeminal&amp;rdquo; &amp;ldquo;skull base&amp;rdquo; &amp;ldquo;CISS&amp;rdquo; &amp;ldquo;SPACE&amp;rdquo; contained in the description. CISS and SPACE are T2 like sequences commonly used in skull base imaging for their impressive csf-brain matter contrast.&lt;/p&gt;
@@ -1143,14 +1143,14 @@ Nuthatch as the color scheme for the plots in this post.&lt;/p&gt;
     
     <item>
       <title>predicting recurrence in patients with brain metastases</title>
-      <link>https://mulfordkl.github.io/predicting-recurrence-in-patients-with-brain-metastases/</link>
+      <link>/posts/ctro-cavity/</link>
       <pubDate>Mon, 10 May 2021 00:00:00 +0000</pubDate>
       
-      <guid>https://mulfordkl.github.io/predicting-recurrence-in-patients-with-brain-metastases/</guid>
+      <guid>/posts/ctro-cavity/</guid>
       <description>&lt;h3 id=&#34;read-the-paper-here-linkhttpswwwctrosciencearticles2405-63082100045-8fulltext&#34;&gt;Read the paper here: &lt;a href=&#34;https://www.ctro.science/article/S2405-6308(21)00045-8/fulltext&#34;&gt;LINK&lt;/a&gt;&lt;/h3&gt;
 &lt;p&gt;This past week I had my first first-author publication published. It&amp;rsquo;s satisfying to see a project I put a lot of thought and effort into come to something tangible. This paper is the combination of a cool technique applied to a unique dataset.&lt;/p&gt;
 &lt;p&gt;The technique is radiomics, a method for extracting quantitative features from medical imaging datasets and developing predictive models with those features. The dataset is a cohort of patients who develop brain metastases, have them resected, and then receive stereotactic radiosurgery to the surgical cavity. Our question is whether or not radiomics features could be used to predict which patients will experience a recurrence within the resection cavity. This is what the MRIs look like:&lt;/p&gt;
-&lt;p&gt;&lt;img src=&#34;https://mulfordkl.github.io/static/figs/ctro-cavity/mri.png&#34; alt=&#34;Figure 1: MRI&#34; title=&#34;MRI images&#34;&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;/static/figs/ctro-cavity/mri.png&#34; alt=&#34;Figure 1: MRI&#34; title=&#34;MRI images&#34;&gt;&lt;/p&gt;
 &lt;p&gt;If you don&amp;rsquo;t want to read the rest of the article - our conclusion was that a radiomics based predictive model does moderately succesfull at identifying patients who will eventually experience a local recurrence and substantiallyt outperforms clinically derived features alone. Our hunch is that more data would increase this effect.&lt;/p&gt;
 &lt;h3 id=&#34;the-process&#34;&gt;The Process&lt;/h3&gt;
 &lt;p&gt;The first step is the assembly of the dataset - we were looking for patients who had&lt;/p&gt;
@@ -1169,11 +1169,11 @@ Nuthatch as the color scheme for the plots in this post.&lt;/p&gt;
 &lt;ul&gt;
 &lt;li&gt;Our image-feature based model gives us an AUC of 0.73, with an accuracy of 76%. This outperforms the model trained on the clinical features alone (see figure).&lt;/li&gt;
 &lt;/ul&gt;
-&lt;p&gt;&lt;img src=&#34;https://mulfordkl.github.io/static/figs/ctro-cavity/auc.png&#34; alt=&#34;Figure 1: ROC curves&#34; title=&#34;ROC Curves&#34;&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;/static/figs/ctro-cavity/auc.png&#34; alt=&#34;Figure 1: ROC curves&#34; title=&#34;ROC Curves&#34;&gt;&lt;/p&gt;
 &lt;ul&gt;
 &lt;li&gt;The cutpoint analysis on the GBM class propbabilities shows that patients placed into the &amp;ldquo;high risk&amp;rdquo; category by the model have worse outcomes. While this does not rise to the 0.05 level of statistical significance - the trend is clearly evident.&lt;/li&gt;
 &lt;/ul&gt;
-&lt;p&gt;&lt;img src=&#34;https://mulfordkl.github.io/static/figs/ctro-cavity/survival.png&#34; alt=&#34;Figure 2: Survival curves&#34; title=&#34;Survival Curves&#34;&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;/static/figs/ctro-cavity/survival.png&#34; alt=&#34;Figure 2: Survival curves&#34; title=&#34;Survival Curves&#34;&gt;&lt;/p&gt;
 &lt;h3 id=&#34;conclusions&#34;&gt;Conclusions&lt;/h3&gt;
 &lt;p&gt;The big conclusion is that radiomics models not only apply to solid tumors, but also to the resection cavities left behind - this could potentially lead the way towards personalized adjuvant treatment planning schemes. Unfortunately, the opportunities to get more data for this project are small - as the department upgraded its GammaKnife and they now do a hypofractionated scheme for adjuvant therapy to cavities.&lt;/p&gt;
 &lt;p&gt;Overall this was one of the first projects I took on as a graduate student, and it was really cool to see it out in the world. Thanks for reading!&lt;/p&gt;
@@ -1184,10 +1184,10 @@ Nuthatch as the color scheme for the plots in this post.&lt;/p&gt;
     
     <item>
       <title>2021 UMN interdisciplinary health data competition</title>
-      <link>https://mulfordkl.github.io/2021-umn-interdisciplinary-health-data-competition/</link>
+      <link>/posts/ihdc-2021/</link>
       <pubDate>Thu, 15 Apr 2021 00:00:00 +0000</pubDate>
       
-      <guid>https://mulfordkl.github.io/2021-umn-interdisciplinary-health-data-competition/</guid>
+      <guid>/posts/ihdc-2021/</guid>
       <description>&lt;h3 id=&#34;watch-the-presentation-here-linkhttpsumnzoomusrecplay_t4ikuggae9wa1veojewoxf0g3ejy5yttasnx9efttqirasoxlejjzibamhkg6ntz9vxj7miz1o3ey9bvut-yb2s8fpmwkzxstarttime1617138118000_x_zm_rtaidbm3o1qd3rc-fdsbnw5gcew16288781881632647e31df6e13e5cc1ebf23026f15e25_x_zm_rhtaid145&#34;&gt;Watch the presentation here: &lt;a href=&#34;https://umn.zoom.us/rec/play/_T4IkuGgAe9Wa1veOJeWOXf0g3EJy5YTtasNx9eftTqiRaSOxLeJJZiBAmhkG6NTz9Vxj7miZ1O3Ey9B.vut-yb2S8FPMWKzx?startTime=1617138118000&amp;amp;_x_zm_rtaid=bM3o1qd3RC-fdsbnw5Gcew.1628878188163.2647e31df6e13e5cc1ebf23026f15e25&amp;amp;_x_zm_rhtaid=145&#34;&gt;Link&lt;/a&gt;&lt;/h3&gt;
 &lt;p&gt;This past month I had the opportunity to compete in the 2021 edition of the Interdisciplinary Health Data competition, put on by the University of Minnesota Carlson School of Management. I joined a team of two other CTSI TL1 scholars, Serena Xiong and Emily Groene Faherty, both in the School of Public Health.&lt;/p&gt;
 &lt;p&gt;The competition requires use of one of two datasets, and can be supplemented by any other publically available dataset. The required dataset, unsurprisingly, was COVID-19 hospitalization and community impact data from across the country. As this was March, and vaccination efforts were in full swing, our team quickly decided to focus on vaccination data. Specifically, we were wondering if the early reports of vaccination disparities could be seen in the publically available data.&lt;/p&gt;
@@ -1195,16 +1195,16 @@ Nuthatch as the color scheme for the plots in this post.&lt;/p&gt;
 &lt;p&gt;Our approach was straightforward - could we identify demographic, socioeconomic, or COVID-19 related factors that correlate with the vaccination rate in a specific county?&lt;/p&gt;
 &lt;p&gt;To start, we needed to get the vaccination rate in each county. There are two options for this: 1. Use the absolute percentage of adults vaccinated at a fixed time point or 2. Use the rate at which a county is vaccinating its population. We decided to use the latter, as we thought it would give a more dynamic representation of how the vaccination process was going in a county.&lt;/p&gt;
 &lt;p&gt;We acquired the weekly vaccination counts per county from the Minnesota Department of Health. All I needed to do then was to fit a linear model to each county, where the input variable was time and the output variable was the percentage of vaccinated adults in the county. Then - the coefficient of the time variable gives the rate at which the county was vaccinating its population. I learned how to plot to a map to make the following figure:&lt;/p&gt;
-&lt;p&gt;&lt;img src=&#34;https://mulfordkl.github.io/static/figs/ihdc-2021/vacc-rates.png&#34; alt=&#34;Figure 1: Vaccination Rates by MN County&#34; title=&#34;Vaccination Rates&#34;&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;/static/figs/ihdc-2021/vacc-rates.png&#34; alt=&#34;Figure 1: Vaccination Rates by MN County&#34; title=&#34;Vaccination Rates&#34;&gt;&lt;/p&gt;
 &lt;p&gt;At that point in time, Cook county and Mahnomen county had absurdly high rates of vaccination. We did a little digging, and found that Cook county had a extremely robust COVID-19 information site, with lots of helpful info on where to get the vaccine. Mahnomen county is entirely located within a Native American reservation - and is allowed to set its own rules for vaccine elligibility.&lt;/p&gt;
 &lt;p&gt;The next step of our analysis was to see if we could build a model predicting the vaccination rate in a county based on demographic, socioeconomic, or COVID-19 related factors. First we assembled a large dataset of potential covariates; ranging from demographic factors like age, race, and ethnicity to socioeconomic factors like broadband access to COVID-19 factors like nursing home beds per capita, or the peak COVID-19 caseload during the pandemic. To do an initial search, we calculated simple correlation between these factors on a county level and the county&amp;rsquo;s vaccination rate, which you can see here:&lt;/p&gt;
-&lt;p&gt;&lt;img src=&#34;https://mulfordkl.github.io/static/figs/ihdc-2021/correlation.png&#34; alt=&#34;Figure 2: Vaccination Rate Correlates&#34; title=&#34;Covariate correlations with vaccination rate&#34;&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;/static/figs/ihdc-2021/correlation.png&#34; alt=&#34;Figure 2: Vaccination Rate Correlates&#34; title=&#34;Covariate correlations with vaccination rate&#34;&gt;&lt;/p&gt;
 &lt;p&gt;As nursing homes were the first to get the vaccine, we were not surprised by that positive correlation. The surprise here was the &amp;ldquo;social distancing&amp;rdquo; metric. This metric gives the overall level of county wide adherence to social distancing guidelines (I am not sure how this is calculated - maybe some combination of sales or attendance figures in public?). The fact that it is positively correlated means that counties that had a higher adherence to social distancing guidelines had higher vaccination rates. We plotted the top 6 correlated features on maps of Minnesota:&lt;/p&gt;
-&lt;p&gt;&lt;img src=&#34;https://mulfordkl.github.io/static/figs/ihdc-2021/corrmap1.png&#34; alt=&#34;Figure 3: Vaccination Rate Correlates, Mapped&#34; title=&#34;Covariates Mapped&#34;&gt;
-&lt;img src=&#34;https://mulfordkl.github.io/static/figs/ihdc-2021/corrmap2.png&#34; alt=&#34;Figure 4: Vaccination Rate Correlates, Mapped&#34; title=&#34;Coviariates Mapped&#34;&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;/static/figs/ihdc-2021/corrmap1.png&#34; alt=&#34;Figure 3: Vaccination Rate Correlates, Mapped&#34; title=&#34;Covariates Mapped&#34;&gt;
+&lt;img src=&#34;/static/figs/ihdc-2021/corrmap2.png&#34; alt=&#34;Figure 4: Vaccination Rate Correlates, Mapped&#34; title=&#34;Coviariates Mapped&#34;&gt;&lt;/p&gt;
 &lt;p&gt;You&amp;rsquo;ll note that a lot of the factors negatively correlated with vaccination rate are highest in the counties directly surrounding the twin cities. I don&amp;rsquo;t have a great explanation for this - but in my head it involves Facebook and anti-vaccination sentiments among the suburbs.&lt;/p&gt;
 &lt;p&gt;Finally, We built a gradient boosting regressor which outperformed a baseline &amp;ldquo;mean-value&amp;rdquo; regression line. One of the issues with machine learning models in general is interpretability. GBMs can get around this by what&amp;rsquo;s called a partial dependence plot. A partial dependence plot looks at how the output of the model changes across the range of a covariate, keeping all other covariates constant. It is not a perfect method, but it can tell you how a model behaves under certain variable changes. The plots of these back up a lot of the knowledge gained from the correlation plots:&lt;/p&gt;
-&lt;p&gt;&lt;img src=&#34;https://mulfordkl.github.io/static/figs/ihdc-2021/partialdependence.png&#34; alt=&#34;Figure 5: Partial Dependence Plots&#34; title=&#34;Partial Dependence Plots&#34;&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;/static/figs/ihdc-2021/partialdependence.png&#34; alt=&#34;Figure 5: Partial Dependence Plots&#34; title=&#34;Partial Dependence Plots&#34;&gt;&lt;/p&gt;
 &lt;p&gt;Our conclusions were that vaccination rates tended to be lowest in the suburbs, but the state was actually doing a pretty good job of vaccinating the hard hit rural areas.&lt;/p&gt;
 &lt;h3 id=&#34;final-thoughts&#34;&gt;Final thoughts&lt;/h3&gt;
 &lt;p&gt;While we were named as one of the five finalist teams out of 26, which is why we got to present live to a panel of judges; we unfortunately placed just outside of the money. There are a few things I would&amp;rsquo;ve done differently:&lt;/p&gt;
@@ -1220,10 +1220,10 @@ Nuthatch as the color scheme for the plots in this post.&lt;/p&gt;
     
     <item>
       <title>tracking my music tastes with the spotify API</title>
-      <link>https://mulfordkl.github.io/tracking-my-music-tastes-with-the-spotify-api/</link>
+      <link>/posts/spotify-analysis/</link>
       <pubDate>Sun, 21 Mar 2021 00:00:00 +0000</pubDate>
       
-      <guid>https://mulfordkl.github.io/tracking-my-music-tastes-with-the-spotify-api/</guid>
+      <guid>/posts/spotify-analysis/</guid>
       <description>&lt;h3 id=&#34;introduction&#34;&gt;Introduction&lt;/h3&gt;
 &lt;p&gt;Every year in December Spotify releases a personalized &amp;ldquo;year-in-review&amp;rdquo; that gives each Spotify user a look at what and how much music they listened to over the year. This also comes with a 100 song playlist of your most listened to tracks for the year. Now I recently learned that Spotify keeps features about each track, like &amp;lsquo;acousticness&amp;rsquo; and &amp;lsquo;danceability&amp;rsquo; as well as boring music theory stuff (I jest) like cadence key, and time signature. Presumably they use it for new music recommendations and to prevent large mood swings when shuffling (I&amp;rsquo;m telling you right now it is NOT random). I figured I could learn something about how my music tastes have changed over time from these features and my most played tracks - so I explored how to access my data and the track data with the Spotify API.&lt;/p&gt;
 &lt;h3 id=&#34;get-that-data&#34;&gt;Get that data&lt;/h3&gt;
@@ -1355,11 +1355,11 @@ Nuthatch as the color scheme for the plots in this post.&lt;/p&gt;
 &lt;/div&gt;
 &lt;p&gt;The first thing I am interested in is how the average features over the playlist change through the years. To do this I used the &lt;code&gt;group_by()&lt;/code&gt; function to group the features by year and then &lt;code&gt;summarise()&lt;/code&gt; in conjunction with &lt;a href=&#34;https://rdrr.io/r/base/mean.html&#34;&gt;&lt;code&gt;mean()&lt;/code&gt;&lt;/a&gt; to get a dataframe of the mean audio feature per year. The plot of the features over time is below:&lt;/p&gt;
 &lt;div class=&#34;highlight&#34;&gt;
-&lt;p&gt;&lt;img src=&#34;https://mulfordkl.github.io/static/figs/spotify-analysis/features-by-year.png&#34; width=&#34;700px&#34; style=&#34;display: block; margin: auto;&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;/static/figs/spotify-analysis/features-by-year.png&#34; width=&#34;700px&#34; style=&#34;display: block; margin: auto;&#34; /&gt;&lt;/p&gt;
 &lt;/div&gt;
 &lt;p&gt;As it appears, I am becoming more boring. The mean energy of my top tracks, as well as the mean dancebility, is decreasing. On the other hand, the mean acousticness and instrumentalness is increasing. Have I started listening to more classical music? I manually coded whether a track was classical or not - but you may be able to pull it from the artist. In Spotify, genre is stored in the artists pbject, not in the song or album information. Keeping in mind that 2016 has 101 songs somehow, here is the proportion of classical music over time:&lt;/p&gt;
 &lt;div class=&#34;highlight&#34;&gt;
-&lt;p&gt;&lt;img src=&#34;https://mulfordkl.github.io/static/figs/spotify-analysis/classical-by-year.png&#34; width=&#34;700px&#34; style=&#34;display: block; margin: auto;&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;/static/figs/spotify-analysis/classical-by-year.png&#34; width=&#34;700px&#34; style=&#34;display: block; margin: auto;&#34; /&gt;&lt;/p&gt;
 &lt;/div&gt;
 &lt;p&gt;The answer is yes - I have been listening to more classical music since 2016. But that doesn&amp;rsquo;t tell the whole story. Classical music tracks are, on average, longer than non-classical tracks. So while the genre classical represents about a third of my top tracks each year, the proportion of time spent listening to classical music is larger than that.&lt;/p&gt;
 &lt;p&gt;Lastly I&amp;rsquo;ll take a peek at the distribution of the popularity metric among my top songs from 2016 to 2020. The popularity is a metric from 0 (20th Century French Organ Music) to 100 (Ariana Grande), so we can see how obscure my music tastes are.&lt;/p&gt;
@@ -1414,7 +1414,7 @@ Nuthatch as the color scheme for the plots in this post.&lt;/p&gt;
 &lt;/table&gt;
 &lt;/div&gt;
 &lt;div class=&#34;highlight&#34;&gt;
-&lt;p&gt;&lt;img src=&#34;https://mulfordkl.github.io/static/figs/spotify-analysis/popularity-by-year.png&#34; width=&#34;700px&#34; style=&#34;display: block; margin: auto;&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;/static/figs/spotify-analysis/popularity-by-year.png&#34; width=&#34;700px&#34; style=&#34;display: block; margin: auto;&#34; /&gt;&lt;/p&gt;
 &lt;/div&gt;
 &lt;p&gt;My most popular songs are from Fleetwood Mac and Drake - but on the whole my music tastes are not very popular, which I blame on Jean Langlais.&lt;/p&gt;
 &lt;h3 id=&#34;conclusion&#34;&gt;Conclusion&lt;/h3&gt;
